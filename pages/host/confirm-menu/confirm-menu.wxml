@@ -1,0 +1,46 @@
+<!--pages/host/confirm-menu/confirm-menu.wxml-->
+<view class="container">
+  <view class="table-info card">
+    <text class="table-name">{{tableInfo.name}}</text>
+    <text class="table-time" wx:if="{{tableInfo.diningDate}}">{{tableInfo.diningDate}} {{tableInfo.diningTime}}</text>
+  </view>
+
+  <view class="summary card">
+    <view class="summary-item">
+      <text class="label">总菜品数</text>
+      <text class="value">{{summary.totalDishes}}</text>
+    </view>
+    <view class="summary-item">
+      <text class="label">总份数</text>
+      <text class="value">{{summary.totalQuantity}}</text>
+    </view>
+    <view class="summary-item">
+      <text class="label">参与人数</text>
+      <text class="value">{{summary.totalPeople}}</text>
+    </view>
+  </view>
+
+  <view class="final-menu">
+    <text class="section-title">最终菜单</text>
+    <view class="menu-item card" wx:for="{{finalMenu}}" wx:key="dishId">
+      <view class="menu-header">
+        <text class="dish-name">{{item.dishName}}</text>
+        <text class="dish-quantity">×{{item.totalQuantity}}</text>
+      </view>
+      <view class="order-details" wx:if="{{item.orders.length > 0}}">
+        <view class="detail-item" wx:for="{{item.orders}}" wx:key="id" wx:for-item="order">
+          <text class="user-name">{{order.userName}}</text>
+          <text class="quantity">×{{order.quantity}}</text>
+          <text class="note" wx:if="{{order.note}}">({{order.note}})</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="bottom-actions">
+    <button class="btn-secondary" bindtap="exportMenu">导出菜单</button>
+    <button class="btn-primary" bindtap="finish">完成</button>
+  </view>
+</view>
+
+

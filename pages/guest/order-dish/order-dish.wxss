@@ -1,0 +1,168 @@
+/* pages/guest/order-dish/order-dish.wxss */
+.view-mode-tabs {
+  display: flex;
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 8rpx;
+  margin-bottom: 24rpx;
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #666666;
+}
+
+.tab-item.active {
+  background-color: #ff6b35;
+  color: #ffffff;
+}
+
+.order-content {
+  margin-bottom: 40rpx;
+}
+
+.order-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.summary-label {
+  font-size: 28rpx;
+  color: #666666;
+}
+
+.summary-price {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #ff6b35;
+}
+
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.order-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.order-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.order-info .dish-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333333;
+}
+
+.order-info .dish-price {
+  font-size: 28rpx;
+  color: #999999;
+}
+
+.order-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.quantity-control {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.quantity-btn {
+  width: 56rpx;
+  height: 56rpx;
+  line-height: 56rpx;
+  text-align: center;
+  background-color: #f5f5f5;
+  border-radius: 50%;
+  font-size: 36rpx;
+  color: #333333;
+}
+
+.quantity-number {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333333;
+  min-width: 48rpx;
+  text-align: center;
+}
+
+.delete-btn {
+  font-size: 26rpx;
+  color: #ff6b35;
+  padding: 8rpx 16rpx;
+}
+
+.order-note {
+  font-size: 24rpx;
+  color: #999999;
+  margin-top: 8rpx;
+}
+
+.person-section {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.person-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.person-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333333;
+}
+
+.person-count {
+  font-size: 28rpx;
+  color: #ff6b35;
+  font-weight: bold;
+}
+
+.order-list .order-item-small {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx;
+  background-color: #f9f9f9;
+  border-radius: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.order-item-small .dish-name {
+  font-size: 28rpx;
+  color: #333333;
+}
+
+.order-item-small .order-quantity {
+  font-size: 28rpx;
+  color: #ff6b35;
+  font-weight: bold;
+}
+
+

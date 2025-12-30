@@ -1,0 +1,72 @@
+<!--pages/guest/menu-view/menu-view.wxml-->
+<view class="container">
+  <view class="table-header card">
+    <text class="table-name">{{tableInfo.name}}</text>
+    <text class="table-time" wx:if="{{tableInfo.diningDate}}">{{tableInfo.diningDate}} {{tableInfo.diningTime}}</text>
+  </view>
+
+  <view class="menu-tabs">
+    <view class="tab-item {{currentCategory === 'all' ? 'active' : ''}}" bindtap="switchCategory" data-category="all">
+      全部
+    </view>
+    <view class="tab-item {{currentCategory === item ? 'active' : ''}}" wx:for="{{categories}}" wx:key="*this" bindtap="switchCategory" data-category="{{item}}">
+      {{item}}
+    </view>
+  </view>
+
+  <view class="dish-list">
+    <view class="dish-item card" wx:for="{{filteredDishes}}" wx:key="id">
+      <image class="dish-image" src="{{item.image || '/images/default-dish.png'}}" mode="aspectFill"></image>
+      <view class="dish-info">
+        <view class="dish-header">
+          <text class="dish-name">{{item.name}}</text>
+          <text class="status-tag recommended" wx:if="{{item.status === 'recommended'}}">推荐</text>
+          <text class="status-tag soldout" wx:if="{{item.status === 'soldout'}}">售罄</text>
+        </view>
+        <text class="dish-desc">{{item.description}}</text>
+        <view class="dish-footer">
+          <text class="dish-price">¥{{item.price}}</text>
+          <view class="quantity-control" wx:if="{{item.status !== 'soldout'}}">
+            <text class="quantity-btn" bindtap="decreaseQuantity" data-id="{{item.id}}">-</text>
+            <text class="quantity-number">{{item.myQuantity || 0}}</text>
+            <text class="quantity-btn" bindtap="increaseQuantity" data-id="{{item.id}}">+</text>
+          </view>
+        </view>
+        <view class="dish-total" wx:if="{{item.totalQuantity > 0}}">
+          <text>共 {{item.totalQuantity}} 份</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:if="{{filteredDishes.length === 0}}">
+    <view class="empty-icon">🍽️</view>
+    <text class="empty-text">暂无菜品</text>
+  </view>
+
+  <view class="bottom-bar">
+    <view class="cart-info" bindtap="viewMyOrders">
+      <text class="cart-text">我的点菜</text>
+      <text class="cart-count">{{myTotalQuantity}}</text>
+    </view>
+    <button class="btn-primary" bindtap="viewAllOrders">查看全部</button>
+  </view>
+</view>
+
+<!-- 备注弹窗 -->
+<view class="modal {{showNoteModal ? 'show' : ''}}" bindtap="closeNoteModal">
+  <view class="modal-content" catchtap="stopPropagation">
+    <view class="modal-header">
+      <text class="modal-title">添加备注</text>
+      <text class="modal-close" bindtap="closeNoteModal">×</text>
+    </view>
+    <view class="modal-body">
+      <textarea class="textarea-field" placeholder="如：少辣、不要香菜" value="{{noteText}}" bindinput="onNoteInput" maxlength="50" />
+    </view>
+    <view class="modal-footer">
+      <button class="btn-secondary" bindtap="closeNoteModal">取消</button>
+      <button class="btn-primary" bindtap="saveNote">保存</button>
+    </view>
+  </view>
+</view>
+

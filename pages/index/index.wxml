@@ -1,0 +1,36 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <view class="header">
+    <image class="logo" src="/images/logo.png" mode="aspectFit"></image>
+    <text class="title">家庭厨房点菜</text>
+    <text class="subtitle">轻松协作，快乐聚餐</text>
+  </view>
+
+  <view class="actions">
+    <view class="action-card" bindtap="createTable">
+      <view class="icon">🍽️</view>
+      <text class="action-title">创建饭桌</text>
+      <text class="action-desc">我是主人，创建新饭桌</text>
+    </view>
+
+    <view class="action-card" bindtap="enterTable">
+      <view class="icon">🎯</view>
+      <text class="action-title">进入饭桌</text>
+      <text class="action-desc">我是客人，通过链接进入</text>
+    </view>
+  </view>
+
+  <view class="quick-access" wx:if="{{recentTables.length > 0}}">
+    <text class="section-title">最近饭桌</text>
+    <view class="table-list">
+      <view class="table-item" wx:for="{{recentTables}}" wx:key="_id" bindtap="enterTableById" data-id="{{item._id}}">
+        <view class="table-info">
+          <text class="table-name">{{item.name}}</text>
+          <text class="table-time">{{item.diningDate}} {{item.diningTime}}</text>
+        </view>
+        <text class="table-status" wx:if="{{item.status === 'confirmed'}}">已确认</text>
+      </view>
+    </view>
+  </view>
+</view>
+

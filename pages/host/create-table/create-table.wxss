@@ -1,0 +1,37 @@
+/* pages/host/create-table/create-table.wxss */
+.picker-view {
+  padding: 24rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 8rpx;
+  margin-bottom: 16rpx;
+  font-size: 28rpx;
+  color: #333333;
+}
+
+.textarea-field {
+  width: 100%;
+  min-height: 160rpx;
+  padding: 24rpx;
+  border: 2rpx solid #e0e0e0;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  font-size: 28rpx;
+  color: #333333;
+}
+
+.checkbox-label checkbox {
+  margin-right: 16rpx;
+}
+
+.btn-primary {
+  width: 100%;
+  margin-top: 40rpx;
+}
+
+

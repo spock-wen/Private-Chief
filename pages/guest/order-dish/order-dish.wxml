@@ -1,0 +1,65 @@
+<!--pages/guest/order-dish/order-dish.wxml-->
+<view class="container">
+  <view class="view-mode-tabs" wx:if="{{viewAll}}">
+    <view class="tab-item {{viewMode === 'my' ? 'active' : ''}}" bindtap="switchViewMode" data-mode="my">
+      我的点菜
+    </view>
+    <view class="tab-item {{viewMode === 'all' ? 'active' : ''}}" bindtap="switchViewMode" data-mode="all">
+      全部点菜
+    </view>
+  </view>
+
+  <!-- 我的点菜 -->
+  <view class="order-content" wx:if="{{!viewAll || viewMode === 'my'}}">
+    <view class="order-summary card">
+      <text class="summary-label">共点 {{myTotalQuantity}} 份</text>
+      <text class="summary-price">¥{{myTotalPrice.toFixed(2)}}</text>
+    </view>
+
+    <view class="order-list">
+      <view class="order-item card" wx:for="{{myOrderList}}" wx:key="id">
+        <view class="order-info">
+          <text class="dish-name">{{item.dishName}}</text>
+          <text class="dish-price">¥{{item.price}}/份</text>
+        </view>
+        <view class="order-controls">
+          <view class="quantity-control">
+            <text class="quantity-btn" bindtap="decreaseQuantity" data-id="{{item.id}}">-</text>
+            <text class="quantity-number">{{item.quantity}}</text>
+            <text class="quantity-btn" bindtap="increaseQuantity" data-id="{{item.id}}">+</text>
+          </view>
+          <text class="delete-btn" bindtap="deleteOrder" data-id="{{item.id}}">删除</text>
+        </view>
+        <text class="order-note" wx:if="{{item.note}}">备注：{{item.note}}</text>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{myOrderList.length === 0}}">
+      <view class="empty-icon">🛒</view>
+      <text class="empty-text">还没有点菜，快去点吧</text>
+    </view>
+  </view>
+
+  <!-- 全部点菜 -->
+  <view class="order-content" wx:if="{{viewAll && viewMode === 'all'}}">
+    <view class="person-section" wx:for="{{ordersByPerson}}" wx:key="userId">
+      <view class="person-header">
+        <text class="person-name">{{item.userName || '未知用户'}}</text>
+        <text class="person-count">{{item.totalQuantity}} 份</text>
+      </view>
+      <view class="order-list">
+        <view class="order-item-small" wx:for="{{item.orders}}" wx:key="id" wx:for-item="order">
+          <text class="dish-name">{{order.dishName}}</text>
+          <text class="order-quantity">×{{order.quantity}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{ordersByPerson.length === 0}}">
+      <view class="empty-icon">📋</view>
+      <text class="empty-text">暂无点菜记录</text>
+    </view>
+  </view>
+</view>
+
+

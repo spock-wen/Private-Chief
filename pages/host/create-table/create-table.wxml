@@ -1,0 +1,42 @@
+<!--pages/host/create-table/create-table.wxml-->
+<view class="container">
+  <view class="card">
+    <view class="input-group">
+      <text class="input-label">饭桌名称 *</text>
+      <input class="input-field" placeholder="如：周六家庭聚餐" value="{{tableName}}" bindinput="onTableNameInput" />
+    </view>
+
+    <view class="input-group">
+      <text class="input-label">用餐时间</text>
+      <picker mode="date" value="{{diningDate}}" bindchange="onDateChange">
+        <view class="picker-view">{{diningDate || '选择日期'}}</view>
+      </picker>
+      <picker mode="time" value="{{diningTime}}" bindchange="onTimeChange">
+        <view class="picker-view">{{diningTime || '选择时间'}}</view>
+      </picker>
+    </view>
+
+    <view class="input-group">
+      <text class="input-label">备注</text>
+      <textarea class="textarea-field" placeholder="如：今天吃辣的" value="{{remark}}" bindinput="onRemarkInput" maxlength="200" />
+    </view>
+
+    <view class="input-group">
+      <label class="checkbox-label">
+        <checkbox checked="{{collectPreferences}}" bindchange="onPreferencesChange" />
+        <text>收集客人口味偏好</text>
+      </label>
+    </view>
+
+    <view class="input-group">
+      <label class="checkbox-label">
+        <checkbox checked="{{needPhoneAuth}}" bindchange="onPhoneAuthChange" />
+        <text>需要手机号验证</text>
+      </label>
+    </view>
+  </view>
+
+  <button class="btn-primary" bindtap="createTable">创建饭桌</button>
+</view>
+
+

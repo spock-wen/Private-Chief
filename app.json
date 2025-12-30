@@ -1,0 +1,25 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/host/create-table/create-table",
+    "pages/host/menu-manage/menu-manage",
+    "pages/host/view-orders/view-orders",
+    "pages/host/confirm-menu/confirm-menu",
+    "pages/host/history/history",
+    "pages/guest/enter-table/enter-table",
+    "pages/guest/menu-view/menu-view",
+    "pages/guest/order-dish/order-dish"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#ff6b35",
+    "navigationBarTitleText": "家庭厨房点菜",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f5f5"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents",
+  "cloud": true
+}
+
+

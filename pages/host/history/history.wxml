@@ -1,0 +1,26 @@
+<!--pages/host/history/history.wxml-->
+<view class="container">
+  <view class="table-list">
+    <view class="table-item card" wx:for="{{historyTables}}" wx:key="_id" bindtap="viewTable" data-id="{{item._id}}">
+      <view class="table-header">
+        <text class="table-name">{{item.name}}</text>
+        <text class="table-status {{item.status}}">
+          {{item.status === 'confirmed' ? '已确认' : item.status === 'active' ? '进行中' : '已结束'}}
+        </text>
+      </view>
+      <view class="table-info">
+        <text class="table-time" wx:if="{{item.diningDate}}">{{item.diningDate}} {{item.diningTime}}</text>
+        <text class="table-remark" wx:if="{{item.remark}}">{{item.remark}}</text>
+      </view>
+      <view class="table-actions">
+        <text class="action-btn" bindtap="reuseMenu" data-id="{{item._id}}" catchtap="stopPropagation">复用菜单</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:if="{{historyTables.length === 0}}">
+    <view class="empty-icon">📚</view>
+    <text class="empty-text">暂无历史记录</text>
+  </view>
+</view>
+

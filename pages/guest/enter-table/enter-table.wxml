@@ -1,0 +1,38 @@
+<!--pages/guest/enter-table/enter-table.wxml-->
+<view class="container">
+  <view class="header">
+    <image class="logo" src="/images/logo.png" mode="aspectFit"></image>
+    <text class="title">进入饭桌</text>
+  </view>
+
+  <view class="enter-methods">
+    <!-- 通过链接进入 -->
+    <view class="method-card card" wx:if="{{!tableId}}">
+      <text class="method-title">输入饭桌链接</text>
+      <input class="input-field" placeholder="请输入饭桌ID或扫描二维码" value="{{inputTableId}}" bindinput="onTableIdInput" />
+      <button class="btn-primary" bindtap="enterByTableId">进入饭桌</button>
+    </view>
+
+    <!-- 扫码进入 -->
+    <view class="method-card card">
+      <text class="method-title">扫码进入</text>
+      <button class="btn-secondary" bindtap="scanQRCode">扫描二维码</button>
+    </view>
+  </view>
+
+  <!-- 饭桌信息 -->
+  <view class="table-info card" wx:if="{{tableInfo}}">
+    <text class="table-name">{{tableInfo.name}}</text>
+    <text class="table-time" wx:if="{{tableInfo.diningDate}}">{{tableInfo.diningDate}} {{tableInfo.diningTime}}</text>
+    <text class="table-remark" wx:if="{{tableInfo.remark}}">{{tableInfo.remark}}</text>
+    
+    <view class="input-group" wx:if="{{!userInfo.nickName}}">
+      <text class="input-label">您的昵称</text>
+      <input class="input-field" placeholder="请输入昵称" value="{{nickName}}" bindinput="onNickNameInput" />
+    </view>
+
+    <button class="btn-primary" bindtap="confirmEnter">确认进入</button>
+  </view>
+</view>
+
+
