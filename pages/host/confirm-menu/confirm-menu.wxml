@@ -1,22 +1,22 @@
 <!--pages/host/confirm-menu/confirm-menu.wxml-->
 <view class="container">
-  <view class="table-info card">
+  <view class="table-info card" wx:if="{{tableInfo}}">
     <text class="table-name">{{tableInfo.name}}</text>
     <text class="table-time" wx:if="{{tableInfo.diningDate}}">{{tableInfo.diningDate}} {{tableInfo.diningTime}}</text>
   </view>
 
-  <view class="summary card">
+  <view class="summary card" wx:if="{{summary}}">
     <view class="summary-item">
       <text class="label">总菜品数</text>
-      <text class="value">{{summary.totalDishes}}</text>
+      <text class="value">{{summary.totalDishes || 0}}</text>
     </view>
     <view class="summary-item">
       <text class="label">总份数</text>
-      <text class="value">{{summary.totalQuantity}}</text>
+      <text class="value">{{summary.totalQuantity || 0}}</text>
     </view>
     <view class="summary-item">
       <text class="label">参与人数</text>
-      <text class="value">{{summary.totalPeople}}</text>
+      <text class="value">{{summary.totalPeople || 0}}</text>
     </view>
   </view>
 

@@ -1,6 +1,6 @@
 <!--pages/guest/menu-view/menu-view.wxml-->
 <view class="container">
-  <view class="table-header card">
+  <view class="table-header card" wx:if="{{tableInfo}}">
     <text class="table-name">{{tableInfo.name}}</text>
     <text class="table-time" wx:if="{{tableInfo.diningDate}}">{{tableInfo.diningDate}} {{tableInfo.diningTime}}</text>
   </view>

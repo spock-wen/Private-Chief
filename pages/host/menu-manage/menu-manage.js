@@ -6,7 +6,7 @@ const app = getApp();
 Page({
   data: {
     tableId: '',
-    tableInfo: null,
+    tableInfo: {},
     dishes: [],
     filteredDishes: [],
     categories: ['热菜', '凉菜', '汤品', '主食', '饮品'],
@@ -42,7 +42,7 @@ Page({
   // 加载饭桌信息
   async loadTableInfo() {
     try {
-      const tableInfo = await api.getTable(this.data.tableId);
+      const tableInfo = await api.getTableInfo(this.data.tableId);
       this.setData({ tableInfo });
     } catch (error) {
       console.error('加载饭桌信息失败:', error);
@@ -53,18 +53,35 @@ Page({
   async loadMenu() {
     util.showLoading('加载中...');
     try {
-      const dishes = await api.getMenu(this.data.tableId);
+      const dishes = await api.getTableMenu(this.data.tableId);
+      
+      // 确保dishes是数组
+      if (!Array.isArray(dishes)) {
+        console.warn('菜单数据格式错误:', dishes);
+        this.setData({
+          dishes: [],
+          filteredDishes: [],
+        });
+        return;
+      }
+      
       // 确保每个菜品都有 id 字段
-      const dishesWithId = (dishes || []).map(dish => ({
+      const dishesWithId = dishes.map(dish => ({
         ...dish,
         id: dish.id || dish._id,
       }));
+      
       this.setData({
         dishes: dishesWithId,
         filteredDishes: dishesWithId,
       });
     } catch (error) {
+      console.error('加载菜单失败:', error);
       util.showError('加载菜单失败');
+      this.setData({
+        dishes: [],
+        filteredDishes: [],
+      });
     } finally {
       util.hideLoading();
     }
@@ -213,15 +230,17 @@ Page({
         });
         util.showSuccess('更新成功');
       } else {
-        // 添加菜品
-        await api.addDish(this.data.tableId, {
+        // 先创建全局菜品
+        const dishId = await api.createMenuItem({
           name: this.data.dishForm.name,
           category: this.data.dishForm.category,
           price: parseFloat(this.data.dishForm.price) || 0,
           description: this.data.dishForm.description,
           status: this.data.dishForm.status,
-          createTime: new Date(),
         });
+        
+        // 然后将菜品添加到当前饭桌
+        await api.addDishToTable(this.data.tableId, dishId);
         util.showSuccess('添加成功');
       }
 

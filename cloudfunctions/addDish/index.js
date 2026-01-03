@@ -8,18 +8,32 @@ cloud.init({
 const db = cloud.database();
 
 exports.main = async (event, context) => {
-  const { tableId, name, category, price, description, status, image } = event;
+  const { name, category, price, description, status, image, createdBy } = event;
 
   try {
+    // 检查用户权限
+    const user = await db.collection('users')
+      .where({
+        openid: createdBy
+      })
+      .get();
+
+    if (user.data.length === 0 || user.data[0].role !== 'host') {
+      return {
+        success: false,
+        error: '只有主人才能添加菜品'
+      };
+    }
+
     const result = await db.collection('menus').add({
       data: {
-        tableId,
         name,
         category: category || '其他',
         price: price || 0,
         description: description || '',
         status: status || 'available', // available, recommended, soldout
         image: image || '',
+        createdBy: createdBy,
         createTime: db.serverDate(),
         updateTime: db.serverDate(),
       },

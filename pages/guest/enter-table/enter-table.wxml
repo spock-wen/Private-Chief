@@ -26,7 +26,7 @@
     <text class="table-time" wx:if="{{tableInfo.diningDate}}">{{tableInfo.diningDate}} {{tableInfo.diningTime}}</text>
     <text class="table-remark" wx:if="{{tableInfo.remark}}">{{tableInfo.remark}}</text>
     
-    <view class="input-group" wx:if="{{!userInfo.nickName}}">
+    <view class="input-group" wx:if="{{!userInfo || !userInfo.nickName}}">
       <text class="input-label">您的昵称</text>
       <input class="input-field" placeholder="请输入昵称" value="{{nickName}}" bindinput="onNickNameInput" />
     </view>

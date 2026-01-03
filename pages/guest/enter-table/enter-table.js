@@ -9,7 +9,7 @@ Page({
     inputTableId: '',
     tableInfo: null,
     nickName: '',
-    userInfo: {},
+    userInfo: null,
   },
 
   onLoad(options) {
@@ -54,7 +54,7 @@ Page({
 
     util.showLoading('加载中...');
     try {
-      const tableInfo = await api.getTable(this.data.tableId);
+      const tableInfo = await api.getTableInfo(this.data.tableId);
       
       if (!tableInfo) {
         util.showError('饭桌不存在');

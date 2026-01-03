@@ -57,7 +57,7 @@ Page({
       const orders = await api.getUserOrders(this.data.tableId, this.data.userId);
       
       // 获取菜品信息以显示价格和名称
-      const menu = await api.getMenu(this.data.tableId);
+      const menu = await api.getTableMenu(this.data.tableId);
       const menuMap = {};
       menu.forEach(dish => {
         const dishId = dish.id || dish._id;
@@ -96,7 +96,7 @@ Page({
       const orders = await api.getOrders(this.data.tableId);
       
       // 获取菜品信息
-      const menu = await api.getMenu(this.data.tableId);
+      const menu = await api.getTableMenu(this.data.tableId);
       const menuMap = {};
       menu.forEach(dish => {
         const dishId = dish.id || dish._id;

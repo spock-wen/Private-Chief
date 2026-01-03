@@ -8,7 +8,7 @@ Page({
     tableId: '',
     userId: '',
     nickName: '',
-    tableInfo: null,
+    tableInfo: {},
     dishes: [],
     filteredDishes: [],
     categories: [],
@@ -52,7 +52,7 @@ Page({
   // 加载饭桌信息
   async loadTableInfo() {
     try {
-      const tableInfo = await api.getTable(this.data.tableId);
+      const tableInfo = await api.getTableInfo(this.data.tableId);
       this.setData({ tableInfo });
     } catch (error) {
       console.error('加载饭桌信息失败:', error);
@@ -63,7 +63,18 @@ Page({
   async loadMenu() {
     util.showLoading('加载中...');
     try {
-      const dishes = await api.getMenu(this.data.tableId);
+      const dishes = await api.getTableMenu(this.data.tableId);
+      
+      // 确保dishes是数组
+      if (!Array.isArray(dishes)) {
+        console.warn('菜单数据格式错误:', dishes);
+        this.setData({
+          dishes: [],
+          filteredDishes: [],
+          categories: [],
+        });
+        return;
+      }
       
       // 提取分类
       const categories = [...new Set(dishes.map(d => d.category).filter(Boolean))];
@@ -78,20 +89,26 @@ Page({
         return {
           ...dish,
           id: dishId,
-          myQuantity,
+          myQuantity: myQuantity || 0,
         };
       });
 
       this.setData({
-        dishes: dishesWithQuantity,
-        filteredDishes: dishesWithQuantity,
-        categories,
+        dishes: dishesWithQuantity || [],
+        filteredDishes: dishesWithQuantity || [],
+        categories: categories || [],
       });
 
       // 加载所有订单以统计总数
       this.loadAllOrders();
     } catch (error) {
+      console.error('加载菜单失败:', error);
       util.showError('加载菜单失败');
+      this.setData({
+        dishes: [],
+        filteredDishes: [],
+        categories: [],
+      });
     } finally {
       util.hideLoading();
     }
@@ -129,7 +146,8 @@ Page({
   // 加载所有订单（用于显示总数）
   async loadAllOrders() {
     try {
-      const orders = await api.getOrders(this.data.tableId);
+      // 客人模式，传入userId以获取所有订单（因为API内部会根据角色决定）
+      const orders = await api.getOrders(this.data.tableId, null);
       const dishQuantityMap = {};
 
       orders.forEach(order => {

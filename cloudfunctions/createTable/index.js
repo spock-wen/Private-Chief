@@ -8,7 +8,7 @@ cloud.init({
 const db = cloud.database();
 
 exports.main = async (event, context) => {
-  const { name, diningDate, diningTime, remark, collectPreferences, needPhoneAuth } = event;
+  const { name, diningDate, diningTime, remark, collectPreferences, needPhoneAuth, creatorId } = event;
 
   try {
     const result = await db.collection('tables').add({
@@ -19,6 +19,7 @@ exports.main = async (event, context) => {
         remark,
         collectPreferences: collectPreferences || false,
         needPhoneAuth: needPhoneAuth || false,
+        creatorId, // 主人openid
         status: 'active', // active, confirmed, finished
         createTime: db.serverDate(),
         updateTime: db.serverDate(),
@@ -37,5 +38,3 @@ exports.main = async (event, context) => {
     };
   }
 };
-
-

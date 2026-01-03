@@ -65,7 +65,7 @@ Page({
           util.showLoading('加载中...');
           try {
             // 获取原饭桌的菜单
-            const menu = await api.getMenu(tableId);
+            const menu = await api.getTableMenu(tableId);
             if (!menu || menu.length === 0) {
               util.showError('该饭桌没有菜单');
               return;

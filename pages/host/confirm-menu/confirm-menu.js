@@ -5,7 +5,7 @@ const util = require('../../../utils/util.js');
 Page({
   data: {
     tableId: '',
-    tableInfo: null,
+    tableInfo: {},
     finalMenu: [],
     summary: {
       totalDishes: 0,
@@ -31,7 +31,7 @@ Page({
     util.showLoading('加载中...');
     try {
       const [tableInfo, orders] = await Promise.all([
-        api.getTable(this.data.tableId),
+        api.getTableInfo(this.data.tableId),
         api.getOrders(this.data.tableId),
       ]);
 

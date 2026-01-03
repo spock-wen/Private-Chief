@@ -31,7 +31,8 @@ Page({
   async loadOrders() {
     util.showLoading('加载中...');
     try {
-      const orders = await api.getOrders(this.data.tableId);
+      // 主人模式，获取所有订单
+      const orders = await api.getOrders(this.data.tableId, null);
       this.setData({ orders: orders || [] });
       this.processOrders();
     } catch (error) {
