@@ -1,0 +1,86 @@
+/* pages/table/table.wxss */
+.action-bar {
+  display: flex;
+  gap: 20rpx;
+  padding: 20rpx;
+  background-color: #ffffff;
+  margin-bottom: 20rpx;
+}
+
+.action-bar .btn-primary,
+.action-bar .btn-secondary {
+  flex: 1;
+}
+
+.table-list {
+  padding: 0 20rpx;
+}
+
+.table-card {
+  margin-bottom: 20rpx;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.table-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333333;
+}
+
+.table-status {
+  font-size: 24rpx;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.status-active {
+  background-color: #e8f5e9;
+  color: #4caf50;
+}
+
+.status-confirmed {
+  background-color: #fff3e0;
+  color: #ff9800;
+}
+
+.status-finished {
+  background-color: #f5f5f5;
+  color: #999999;
+}
+
+.table-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  margin-bottom: 16rpx;
+}
+
+.info-item {
+  font-size: 28rpx;
+  color: #666666;
+}
+
+.table-footer {
+  padding-top: 16rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.create-time {
+  font-size: 24rpx;
+  color: #999999;
+}
+
+.loading-more,
+.no-more {
+  text-align: center;
+  padding: 40rpx;
+  color: #999999;
+  font-size: 28rpx;
+}
+

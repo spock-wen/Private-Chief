@@ -1,0 +1,66 @@
+<!--pages/table/table.wxml-->
+<view class="container">
+  <!-- 未登录提示 -->
+  <view wx:if="{{!isHost && !tables.length}}" class="empty-state">
+    <text class="empty-icon">🍽️</text>
+    <text class="empty-text">请先登录以查看饭桌</text>
+    <button class="btn-primary" bindtap="createTable" style="margin-top: 40rpx;">去登录</button>
+  </view>
+
+  <!-- 主人视图 -->
+  <view wx:if="{{isHost}}">
+    <!-- 创建饭桌按钮 -->
+    <view class="action-bar">
+      <button class="btn-primary" bindtap="createTable">创建饭桌</button>
+      <button class="btn-secondary" bindtap="scanCode">扫码进入</button>
+    </view>
+
+    <view class="table-list">
+      <block wx:if="{{tables.length > 0}}">
+        <view class="table-item card" wx:for="{{tables}}" wx:key="id" bindtap="enterTable" data-id="{{item.id}}">
+          <view class="table-header">
+            <text class="table-name">{{item.name}}</text>
+            <text class="table-status {{item.status}}">{{item.status === 'active' ? '进行中' : '已结束'}}</text>
+          </view>
+          <view class="table-info">
+            <text>📅 {{item.diningDate}} {{item.diningTime}}</text>
+            <text wx:if="{{item.remark}}">📝 {{item.remark}}</text>
+          </view>
+        </view>
+      </block>
+      
+      <!-- 空状态 -->
+      <view class="empty-state" wx:elif="{{!loading && !error}}">
+        <view class="empty-icon">🍽️</view>
+        <text class="empty-text">您还没有创建过饭桌</text>
+        <button class="btn-primary" bindtap="createTable">去创建</button>
+      </view>
+
+      <!-- 错误状态 -->
+      <view class="error-state" wx:if="{{error}}">
+        <text class="error-text">{{error}}</text>
+        <button class="btn-secondary" bindtap="onPullDownRefresh">重试</button>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view wx:if="{{loading}}" class="loading-more">
+      <text>加载中...</text>
+    </view>
+    <view wx:if="{{!hasMore && tables.length > 0}}" class="no-more">
+      <text>没有更多了</text>
+    </view>
+  </view>
+
+  <!-- 客人视图 -->
+  <view wx:if="{{!isHost}}">
+    <view class="action-bar">
+      <button class="btn-primary" bindtap="scanCode">扫码进入饭桌</button>
+    </view>
+    <view class="empty-state">
+      <text class="empty-icon">🎯</text>
+      <text class="empty-text">扫描二维码或通过链接进入饭桌</text>
+    </view>
+  </view>
+</view>
+

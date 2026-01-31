@@ -1,0 +1,51 @@
+{
+  "pages": [
+    "pages/table/table",
+    "pages/menu/menu",
+    "pages/profile/profile",
+    "pages/ai-assistant/index",
+    "pages/index/index",
+    "pages/host/create-table/create-table",
+    "pages/host/menu-manage/menu-manage",
+    "pages/host/view-orders/view-orders",
+    "pages/host/confirm-menu/confirm-menu",
+    "pages/guest/menu-view/menu-view",
+    "pages/guest/order-dish/order-dish"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#ff6b35",
+    "navigationBarTitleText": "家庭厨房点菜",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f5f5"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#ff6b35",
+    "list": [
+      {
+        "pagePath": "pages/table/table",
+        "text": "饭桌",
+        "iconPath": "images/home.png",
+        "selectedIconPath": "images/home-active.png"
+      },
+      {
+        "pagePath": "pages/menu/menu",
+        "text": "菜单",
+        "iconPath": "images/menu.png",
+        "selectedIconPath": "images/menu-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "个人",
+        "iconPath": "images/profile.png",
+        "selectedIconPath": "images/profile-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents",
+  "cloud": true
+}
+
+

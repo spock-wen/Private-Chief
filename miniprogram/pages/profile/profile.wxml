@@ -1,0 +1,67 @@
+<!--pages/profile/profile.wxml-->
+<view class="container">
+  <!-- 未登录状态 -->
+  <view wx:if="{{!hasUserInfo}}" class="login-section">
+    <view class="avatar-placeholder">
+      <text class="avatar-icon">👤</text>
+    </view>
+    <text class="login-tip">请先登录</text>
+    <button class="btn-primary" bindtap="login">登录</button>
+  </view>
+
+  <!-- 已登录状态 -->
+  <view wx:if="{{hasUserInfo}}" class="profile-section">
+    <!-- 用户信息卡片 -->
+    <view class="profile-card card">
+      <view class="avatar-wrapper" bindtap="updateAvatar">
+        <image class="avatar" src="{{userInfo.avatarUrl}}" mode="aspectFill" />
+        <view class="avatar-mask">
+          <text class="avatar-edit">📷</text>
+        </view>
+      </view>
+      <view class="user-info">
+        <view class="nickname-row">
+          <text class="nickname">{{userInfo.nickName || '未设置'}}</text>
+          <text class="edit-icon" bindtap="updateNickName">✏️</text>
+        </view>
+        <text class="user-id" wx:if="{{userInfo.userID}}">ID: {{userInfo.userID}}</text>
+      </view>
+    </view>
+
+    <!-- 角色信息 -->
+    <view class="role-card card" wx:if="{{isHost}}">
+      <view class="role-header">
+        <text class="role-title">主人身份</text>
+        <text class="role-badge" wx:if="{{isFirstHost}}">第一个主人</text>
+      </view>
+      <view class="role-content">
+        <text class="role-desc">您可以创建饭桌、管理菜单、查看点菜情况</text>
+        <button 
+          wx:if="{{!isFirstHost}}"
+          class="btn-secondary remove-host-btn" 
+          bindtap="removeHostRole"
+        >
+          取消主人身份
+        </button>
+        <text wx:if="{{isFirstHost}}" class="first-host-tip">第一个主人不可取消身份</text>
+      </view>
+    </view>
+
+    <!-- 功能列表 -->
+    <view class="menu-list">
+      <view class="menu-item" bindtap="navigateToAi">
+        <text class="menu-text">🤖 智能助手</text>
+        <text class="menu-arrow">></text>
+      </view>
+      <view class="menu-item" wx:if="{{!isHost}}">
+        <text class="menu-text">成为主人</text>
+        <text class="menu-arrow">></text>
+      </view>
+      <view class="menu-item">
+        <text class="menu-text">关于</text>
+        <text class="menu-arrow">></text>
+      </view>
+    </view>
+  </view>
+</view>
+

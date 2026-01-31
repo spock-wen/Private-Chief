@@ -1,0 +1,36 @@
+<view class="container">
+  <scroll-view scroll-y class="chat-list" scroll-into-view="{{scrollTarget}}" scroll-with-animation>
+    <block wx:for="{{msgList}}" wx:key="index">
+      <view class="message-item {{item.role === 'user' ? 'user-message' : 'ai-message'}}" id="msg-{{index}}">
+        <view class="avatar">
+          <!-- 这里的图片路径需要确保存在，或者使用默认图 -->
+          <image src="{{item.role === 'user' ? '/images/user-avatar.png' : '/images/ai-avatar.png'}}" mode="aspectFill" wx:if="{{item.role === 'user'}}"></image>
+           <view wx:else style="width:100%;height:100%;background:#07c160;display:flex;align-items:center;justify-content:center;color:white;font-size:20rpx;">AI</view>
+        </view>
+        <view class="content">
+          <text user-select>{{item.content}}</text>
+        </view>
+        <!-- 用户头像在右边，需要单独处理结构，这里简单处理，实际可用 flex-direction: row-reverse -->
+      </view>
+    </block>
+    <!-- Loading 状态 -->
+    <view class="loading-wrap" wx:if="{{isLoading}}">
+      <view class="dot"></view>
+      <view class="dot"></view>
+      <view class="dot"></view>
+    </view>
+    <view id="bottom-anchor" style="height: 20rpx;"></view>
+  </scroll-view>
+
+  <view class="input-area">
+    <input 
+      class="msg-input" 
+      placeholder="问点什么吧，比如“推荐几个热菜”..." 
+      value="{{inputValue}}" 
+      bindinput="handleInput"
+      bindconfirm="sendMessage"
+      confirm-type="send"
+    />
+    <button class="send-btn" bindtap="sendMessage" disabled="{{isLoading || !inputValue}}">发送</button>
+  </view>
+</view>

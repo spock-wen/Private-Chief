@@ -1,0 +1,70 @@
+<!--pages/menu/menu.wxml-->
+<view class="container">
+  <!-- 分类Tab -->
+  <view class="category-tabs">
+    <view 
+      class="tab-item {{currentCategory === 'all' ? 'active' : ''}}"
+      bindtap="switchCategory"
+      data-category="all"
+    >
+      全部
+    </view>
+    <view 
+      class="tab-item {{currentCategory === item ? 'active' : ''}}"
+      wx:for="{{categories}}"
+      wx:key="*this"
+      bindtap="switchCategory"
+      data-category="{{item}}"
+    >
+      {{item}}
+    </view>
+  </view>
+
+  <!-- 管理按钮（仅主人） -->
+  <view wx:if="{{isHost}}" class="manage-bar">
+    <button class="btn-secondary" bindtap="manageMenu">管理菜单</button>
+  </view>
+
+  <!-- 菜品列表 -->
+  <view wx:if="{{filteredDishes.length > 0}}" class="dish-list">
+    <view 
+      class="dish-card card" 
+      wx:for="{{filteredDishes}}" 
+      wx:key="id"
+    >
+      <view class="dish-image-wrapper" wx:if="{{item.image || item.thumbnail}}">
+        <image 
+          class="dish-image" 
+          src="{{item.thumbnail || item.image}}" 
+          mode="aspectFill"
+          lazy-load
+        />
+      </view>
+      <view class="dish-content">
+        <view class="dish-header">
+          <text class="dish-name">{{item.name}}</text>
+          <text class="dish-status status-{{item.status}}">
+            {{item.status === 'recommended' ? '推荐' : item.status === 'soldout' ? '售罄' : ''}}
+          </text>
+        </view>
+        <text class="dish-category">{{item.category}}</text>
+        <text class="dish-description" wx:if="{{item.description}}">{{item.description}}</text>
+        <view class="dish-footer" wx:if="{{item.price}}">
+          <text class="dish-price">¥{{item.price}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:if="{{filteredDishes.length === 0 && !loading}}" class="empty-state">
+    <text class="empty-icon">🍽️</text>
+    <text class="empty-text">暂无菜品</text>
+  </view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading">
+    <text>加载中...</text>
+  </view>
+</view>
+

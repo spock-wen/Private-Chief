@@ -1,0 +1,63 @@
+<!--pages/host/view-orders/view-orders.wxml-->
+<view class="container">
+  <view class="header-actions">
+    <button class="btn-secondary" bindtap="shareTable">分享饭桌</button>
+  </view>
+
+  <view class="view-mode-tabs">
+    <view class="tab-item {{viewMode === 'by-person' ? 'active' : ''}}" bindtap="switchViewMode" data-mode="by-person">
+      按人查看
+    </view>
+    <view class="tab-item {{viewMode === 'by-dish' ? 'active' : ''}}" bindtap="switchViewMode" data-mode="by-dish">
+      按菜品查看
+    </view>
+  </view>
+
+  <!-- 按人查看 -->
+  <view class="view-content" wx:if="{{viewMode === 'by-person'}}">
+    <view class="person-section" wx:for="{{ordersByPerson}}" wx:key="userId">
+      <view class="person-header">
+        <text class="person-name">{{item.userName || '未知用户'}}</text>
+        <text class="person-count">{{item.totalQuantity}} 份</text>
+      </view>
+      <view class="order-list">
+        <view class="order-item" wx:for="{{item.orders}}" wx:key="id" wx:for-item="order">
+          <view class="order-info">
+            <text class="dish-name">{{order.dishName}}</text>
+            <text class="order-note" wx:if="{{order.note}}">备注：{{order.note}}</text>
+          </view>
+          <text class="order-quantity">×{{order.quantity}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 按菜品查看 -->
+  <view class="view-content" wx:if="{{viewMode === 'by-dish'}}">
+    <view class="dish-section" wx:for="{{ordersByDish}}" wx:key="dishId">
+      <view class="dish-header">
+        <text class="dish-name">{{item.dishName}}</text>
+        <text class="dish-count">共 {{item.totalQuantity}} 份</text>
+      </view>
+      <view class="order-list">
+        <view class="order-item" wx:for="{{item.orders}}" wx:key="id" wx:for-item="order">
+          <text class="user-name">{{order.userName}}</text>
+          <text class="order-quantity">×{{order.quantity}}</text>
+          <text class="order-note" wx:if="{{order.note}}">({{order.note}})</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:if="{{ordersByPerson.length === 0 && ordersByDish.length === 0}}">
+    <view class="empty-icon">📋</view>
+    <text class="empty-text">暂无点菜记录</text>
+  </view>
+
+  <view class="bottom-actions">
+    <button class="btn-secondary" bindtap="goToMenuManage">管理菜单</button>
+    <button class="btn-primary" bindtap="confirmMenu">确认菜单</button>
+  </view>
+</view>
+
+

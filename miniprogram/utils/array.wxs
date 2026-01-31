@@ -1,0 +1,9 @@
+
+var includes = function(arr, item) {
+  if (!arr) return false;
+  return arr.indexOf(item) > -1;
+}
+
+module.exports = {
+  includes: includes
+};
