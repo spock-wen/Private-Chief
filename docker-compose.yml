@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  spockchef-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: spockchef-frontend
+    ports:
+      - "8060:8060"
+    depends_on:
+      - spockchef-backend
+    networks:
+      - spockchef-network
+    restart: unless-stopped
+
+  spockchef-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: spockchef-backend
+    ports:
+      - "8070:8070"
+    depends_on:
+      - spockchef-db
+    environment:
+      - DATABASE_URL=postgresql://postgres:wenspock@spockchef-db:5432/spockchef?schema=public
+    networks:
+      - spockchef-network
+    restart: unless-stopped
+
+  spockchef-db:
+    image: postgres:15-alpine
+    container_name: spockchef-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=wenspock
+      - POSTGRES_DB=spockchef
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - spockchef-network
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+
+networks:
+  spockchef-network:
+    name: spockchef-network
+    driver: bridge
+    external: false

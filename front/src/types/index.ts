@@ -1,17 +1,21 @@
-export enum Category {
-  HOT_DISH = 'HOT_DISH',
-  COLD_DISH = 'COLD_DISH',
-  SOUP = 'SOUP',
-  STAPLE = 'STAPLE',
-  DRINK = 'DRINK',
-}
+export const Category = {
+  HOT_DISH: 'HOT_DISH',
+  COLD_DISH: 'COLD_DISH',
+  SOUP: 'SOUP',
+  STAPLE: 'STAPLE',
+  DRINK: 'DRINK',
+} as const;
 
-export enum TableStatus {
-  PLANNING = 'PLANNING',
-  VOTING = 'VOTING',
-  LOCKED = 'LOCKED',
-  ARCHIVED = 'ARCHIVED',
-}
+export type Category = typeof Category[keyof typeof Category];
+
+export const TableStatus = {
+  PLANNING: 'PLANNING',
+  VOTING: 'VOTING',
+  LOCKED: 'LOCKED',
+  ARCHIVED: 'ARCHIVED',
+} as const;
+
+export type TableStatus = typeof TableStatus[keyof typeof TableStatus];
 
 export interface Dish {
   id: string;

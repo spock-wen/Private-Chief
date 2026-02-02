@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Category {
+  HOT_DISH    // 热菜
+  COLD_DISH   // 凉菜
+  SOUP        // 汤
+  STAPLE      // 主食
+  DRINK       // 饮料
+}
+
+enum TableStatus {
+  PLANNING    // 筹备中
+  VOTING      // 投票中
+  LOCKED      // 已锁定
+  ARCHIVED    // 已结束
+}
+
+model Dish {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  image       String?
+  category    Category
+  tags        String[] // 口味标签
+  allergens   String?  // 过敏原文本
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // 关联
+  tablesAsCandidate Table[] @relation("CandidateDishes")
+  tablesAsFinal     Table[] @relation("FinalDishes")
+  votes             Vote[]
+}
+
+model Table {
+  id            String      @id @default(uuid())
+  name          String
+  time          DateTime
+  location      String?
+  status        TableStatus @default(PLANNING)
+  totalExpense  Float?      // 总支出
+  hostSessionId String      // 创建者的 sessionId
+  finalDishIds  String[]    @default([])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  // 关联
+  candidateDishes Dish[] @relation("CandidateDishes")
+  finalDishes     Dish[] @relation("FinalDishes")
+  guests          Guest[]
+  votes           Vote[]
+}
+
+model Guest {
+  id          String   @id @default(uuid())
+  sessionId   String   // 用于 Browser Session 标记匿名身份
+  name        String
+  preferences String?  // 忌口/偏好
+  tableId     String
+  table       Table    @relation(fields: [tableId], references: [id])
+  votes       Vote[]
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId])
+}
+
+model Vote {
+  id        String   @id @default(uuid())
+  guestId   String
+  guest     Guest    @relation(fields: [guestId], references: [id])
+  dishId    String
+  dish      Dish     @relation(fields: [dishId], references: [id])
+  tableId   String
+  table     Table    @relation(fields: [tableId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([guestId, dishId, tableId])
+}

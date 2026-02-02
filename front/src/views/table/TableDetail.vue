@@ -532,7 +532,7 @@
 
 <script setup lang="ts">
 // ... Logic remains largely the same, but imports and reactive refs are updated ...
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { 
   CalendarIcon, MapPinIcon, UtensilsCrossedIcon, PlusCircleIcon, 
@@ -543,7 +543,8 @@ import {
 import ChefButton from '../../components/ChefButton.vue';
 import ChefModal from '../../components/ChefModal.vue';
 import request from '../../api/request';
-import { Table, TableStatus, Category, Dish } from '../../types';
+import type { Table, Dish } from '../../types';
+import { TableStatus, Category } from '../../types';
 import { useUserStore } from '../../stores/useUserStore';
 
 const route = useRoute();

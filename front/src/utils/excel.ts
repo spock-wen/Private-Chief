@@ -28,13 +28,14 @@ const CATEGORY_MAP: Record<string, Category> = {
   'DRINK': Category.DRINK,
 };
 
-const CATEGORY_LABEL_MAP: Record<Category, string> = {
-  [Category.HOT_DISH]: '热菜',
-  [Category.COLD_DISH]: '凉菜',
-  [Category.SOUP]: '汤品',
-  [Category.STAPLE]: '主食',
-  [Category.DRINK]: '饮料',
-};
+// 移除未使用的变量
+// const CATEGORY_LABEL_MAP: Record<Category, string> = {
+//   [Category.HOT_DISH]: '热菜',
+//   [Category.COLD_DISH]: '凉菜',
+//   [Category.SOUP]: '汤品',
+//   [Category.STAPLE]: '主食',
+//   [Category.DRINK]: '饮料',
+// };
 
 export const generateTemplate = () => {
   const headers = ['菜品名称', '分类', '描述', '标签', '图片链接'];
@@ -60,7 +61,13 @@ export const parseExcel = async (file: File): Promise<ParsedDish[]> => {
         const data = e.target?.result;
         const workbook = XLSX.read(data, { type: 'binary' });
         const firstSheetName = workbook.SheetNames[0];
+        if (!firstSheetName) {
+          throw new Error('Excel文件中没有工作表');
+        }
         const worksheet = workbook.Sheets[firstSheetName];
+        if (!worksheet) {
+          throw new Error('无法读取工作表数据');
+        }
         const json = XLSX.utils.sheet_to_json<ExcelDishRow>(worksheet);
         
         const parsedDishes: ParsedDish[] = json.map(row => {
@@ -73,14 +80,14 @@ export const parseExcel = async (file: File): Promise<ParsedDish[]> => {
           }
 
           // Validate and Map Category
-          let category = Category.HOT_DISH;
+          let category: Category = Category.HOT_DISH;
           const catRaw = row['分类']?.trim();
           if (catRaw && CATEGORY_MAP[catRaw]) {
             category = CATEGORY_MAP[catRaw];
           } else if (catRaw) {
              // Try fuzzy match or default
              const found = Object.keys(CATEGORY_MAP).find(k => k.includes(catRaw));
-             if (found) {
+             if (found && CATEGORY_MAP[found]) {
                category = CATEGORY_MAP[found];
              } else {
                errors.push(`未知分类: ${catRaw}`);

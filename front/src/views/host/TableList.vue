@@ -115,7 +115,8 @@ import ChefButton from '../../components/ChefButton.vue';
 import ChefCard from '../../components/ChefCard.vue';
 import ChefModal from '../../components/ChefModal.vue';
 import request from '../../api/request';
-import { Table, TableStatus } from '../../types';
+import type { Table } from '../../types';
+import { TableStatus } from '../../types';
 import { useUserStore } from '../../stores/useUserStore';
 
 const router = useRouter();

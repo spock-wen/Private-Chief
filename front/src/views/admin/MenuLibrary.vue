@@ -179,7 +179,7 @@
                 type="button"
                 v-for="cat in categories.filter(c => c.value !== 'ALL')"
                 :key="cat.value"
-                @click="dishForm.category = cat.value"
+                @click="dishForm.category = cat.value as Category"
                 :class="[
                   'py-2.5 rounded-xl text-xs font-bold transition-all border',
                   dishForm.category === cat.value 
@@ -227,7 +227,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive, watch } from 'vue';
+import { ref, computed, onMounted, reactive } from 'vue';
 import { 
   PlusIcon, SearchIcon, FlameIcon, SnowflakeIcon, CoffeeIcon, 
   SoupIcon, PizzaIcon, LayersIcon, Trash2Icon, CheckIcon, ImageIcon, UploadCloudIcon
@@ -236,7 +236,8 @@ import ChefButton from '../../components/ChefButton.vue';
 import ChefModal from '../../components/ChefModal.vue';
 import ImportDishesModal from './ImportDishesModal.vue';
 import request from '../../api/request';
-import { Dish, Category } from '../../types';
+import type { Dish } from '../../types';
+import { Category } from '../../types';
 
 const dishes = ref<Dish[]>([]);
 const searchQuery = ref('');
@@ -249,15 +250,27 @@ const selectedIds = ref<string[]>([]);
 const tagsInput = ref('');
 const fileInput = ref<HTMLInputElement | null>(null);
 
-const dishForm = reactive({
+interface DishForm {
+  name: string;
+  category: Category;
+  description: string;
+  image: string;
+  tags: string[];
+}
+
+const dishForm = reactive<DishForm>({
   name: '',
   category: Category.HOT_DISH,
   description: '',
   image: '',
-  tags: [] as string[]
+  tags: []
 });
 
-const categories = [
+const categories: Array<{
+  label: string;
+  value: Category | 'ALL';
+  icon: any;
+}> = [
   { label: '全部', value: 'ALL', icon: LayersIcon },
   { label: '热菜', value: Category.HOT_DISH, icon: FlameIcon },
   { label: '凉菜', value: Category.COLD_DISH, icon: SnowflakeIcon },

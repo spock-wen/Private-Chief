@@ -12,4 +12,13 @@ if (typeof crypto.hash !== 'function') {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8070',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  }
 })
