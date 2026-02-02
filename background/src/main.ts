@@ -9,6 +9,9 @@ async function bootstrap() {
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
 
+  // Add global API prefix
+  app.setGlobalPrefix('api');
+
   app.enableCors();
   await app.listen(process.env.PORT ?? 8070);
 }

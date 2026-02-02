@@ -7,8 +7,8 @@
             <!-- Header -->
             <div class="px-6 py-5 sm:px-8 sm:py-6 border-b border-primary/5 flex items-center justify-between bg-accent/5 flex-shrink-0">
               <h3 class="serif-title text-xl sm:text-2xl font-bold text-text-dark">{{ title }}</h3>
-              <button v-if="showClose !== false" @click="$emit('update:modelValue', false)" class="p-2 hover:bg-primary/10 rounded-full transition-colors text-text-dark/40 cursor-pointer">
-                <XIcon :size="20" />
+              <button v-if="props.showClose" @click="$emit('update:modelValue', false)" class="p-3 hover:bg-primary/10 rounded-full transition-all duration-200 text-text-dark hover:text-primary cursor-pointer border border-primary/20 hover:border-primary/40 shadow-sm">
+                <XIcon :size="24" />
               </button>
             </div>
 
@@ -31,13 +31,18 @@
 <script setup lang="ts">
 import { XIcon } from 'lucide-vue-next';
 
-defineProps<{
+// Set default values
+const props = withDefaults(defineProps<{
   modelValue: boolean;
   title: string;
   maxWidth?: string;
   closeOnOutsideClick?: boolean;
   showClose?: boolean;
-}>();
+}>(), {
+  maxWidth: 'max-w-lg',
+  closeOnOutsideClick: true,
+  showClose: true
+});
 
 defineEmits(['update:modelValue']);
 </script>

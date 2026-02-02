@@ -28,7 +28,7 @@ alwaysApply: true
 
 ## 🛠️ 技能调用规范 (Skill Invocation Rules)
 1. **产品需求变更**: 每次涉及产品需求变更时，必须引入 `product-manager-toolkit` 技能进行分析和规划。
-2. **界面变更**: 每次涉及界面（UI）设计或修改时，必须优先调用 `ui Designer` agent，并**必须**调用 `ui-ux-pro-max` 技能。
+2. **界面变更**: 每次涉及界面（UI）设计或修改时，必须优先调用 `ui-designer` agent，并**必须**调用 `ui-ux-pro-max` 技能。
 3. **后端变更** 修改后端代码时，必须优先调用 `backend-architect` agent。
 4. **前端变更** ：修改前端代码时，必须优先调用 `frontend-architect` agent。
 

@@ -63,7 +63,7 @@
           </ChefButton>
         </template>
         <template v-if="table.status === 'VOTING'">
-          <ChefButton variant="primary" @click="isVoterMatrixOpen = true" class="bg-white text-primary border-primary/20 hover:bg-primary/5 shadow-sm">
+          <ChefButton variant="secondary" @click="isVoterMatrixOpen = true" class="bg-primary/20 text-primary border-primary/40 hover:bg-primary/30 shadow-md font-bold transition-all duration-200 px-6">
             <UsersIcon :size="18" />
             查看投票矩阵
           </ChefButton>
