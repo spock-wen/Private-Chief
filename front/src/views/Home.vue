@@ -51,7 +51,7 @@
 
       <!-- Stats or Decorative Card -->
       <div class="md:col-span-1 md:row-span-1 chef-card p-6 flex flex-col justify-center items-center text-center space-y-2 bg-gradient-to-br from-white/80 to-accent/20">
-        <span class="text-3xl font-bold text-primary">24+</span>
+        <span class="text-3xl font-bold text-primary">{{ dishCount }}+</span>
         <span class="text-xs text-text-muted uppercase tracking-widest font-bold">私藏菜谱</span>
       </div>
 
@@ -61,7 +61,7 @@
           <SparklesIcon :size="18" />
           <span class="text-xs font-bold uppercase tracking-wider">今日灵感</span>
         </div>
-        <p class="text-sm italic text-text-muted">“家宴的温度，藏在每一次共同挑选的期待里。”</p>
+        <p class="text-sm italic text-text-muted">"家宴的温度，藏在每一次共同挑选的期待里。"</p>
       </div>
     </div>
 
@@ -73,7 +73,24 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
 import { UtensilsIcon, BookOpenIcon, ArrowRightIcon, SparklesIcon } from 'lucide-vue-next';
+import request from '../api/request';
+
+const dishCount = ref(0);
+
+const fetchDishCount = async () => {
+  try {
+    const dishes = await request.get('/dishes');
+    if (Array.isArray(dishes)) {
+      dishCount.value = dishes.length;
+    }
+  } catch (error) {
+    console.error('Failed to fetch dish count:', error);
+  }
+};
+
+onMounted(fetchDishCount);
 </script>
 
 <style scoped>

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # API测试脚本
-BASE_URL="http://223.109.200.65:8070"
+BASE_URL="http://223.109.200.65:8060/api"
 
 # 颜色定义
 GREEN='\033[0;32m'
