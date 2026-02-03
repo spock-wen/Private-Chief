@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Delete,
-  Body,
-  Param,
-} from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param } from '@nestjs/common';
 import { VotesService } from './votes.service';
 import { VoteDto } from './dto/vote.dto';
 

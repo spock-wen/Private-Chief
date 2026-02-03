@@ -69,12 +69,12 @@ describe('Business Flow (e2e)', () => {
         dishIds: [dishId],
       })
       .expect(200);
-    
+
     // Verify candidates
     const table = await request(app.getHttpServer())
       .get(`/tables/${tableId}`)
       .expect(200);
-    
+
     expect(table.body.candidateDishes).toHaveLength(1);
     expect(table.body.candidateDishes[0].id).toBe(dishId);
   });
@@ -123,16 +123,15 @@ describe('Business Flow (e2e)', () => {
   // Note: Depending on foreign key constraints, we might need to delete votes/guests first or rely on cascade delete.
   // For simplicity in this test, we might skip full cleanup or do it carefully.
   // Prisma usually handles cascade if configured, but let's try to be nice.
-  
+
   it('should unvote (optional cleanup step)', async () => {
-     await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .delete(`/tables/${tableId}/votes/${dishId}`)
       .send({ sessionId }) // DELETE usually doesn't take body in standard REST but our controller uses @Body
-      // Wait, let's check the controller. 
+      // Wait, let's check the controller.
       // @Delete(':dishId') unvote(@Param... @Body('sessionId') ...)
       // HTTP DELETE with body is discouraged but supported by some clients/frameworks.
       // Supertest supports it.
       .expect(200);
   });
-
 });

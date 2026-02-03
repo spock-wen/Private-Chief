@@ -1,4 +1,8 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { TableStatus } from '@prisma/client';
 
@@ -7,7 +11,9 @@ export class VotesService {
   constructor(private prisma: PrismaService) {}
 
   async vote(tableId: string, sessionId: string, dishId: string) {
-    const table = await this.prisma.table.findUnique({ where: { id: tableId } });
+    const table = await this.prisma.table.findUnique({
+      where: { id: tableId },
+    });
     if (!table) throw new NotFoundException('Table not found');
 
     // 锁定投票权限校验
@@ -38,9 +44,11 @@ export class VotesService {
   }
 
   async unvote(tableId: string, sessionId: string, dishId: string) {
-    const table = await this.prisma.table.findUnique({ where: { id: tableId } });
+    const table = await this.prisma.table.findUnique({
+      where: { id: tableId },
+    });
     if (!table) throw new NotFoundException('Table not found');
-    
+
     if (table.status !== TableStatus.VOTING) {
       throw new ForbiddenException('Voting is locked');
     }

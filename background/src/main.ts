@@ -15,4 +15,8 @@ async function bootstrap() {
   app.enableCors();
   await app.listen(process.env.PORT ?? 8070);
 }
-bootstrap();
+
+void bootstrap().catch((error) => {
+  console.error('Error starting server:', error);
+  process.exit(1);
+});

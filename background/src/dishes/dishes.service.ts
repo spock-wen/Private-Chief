@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateDishDto } from './dto/create-dish.dto';
 import { UpdateDishDto } from './dto/update-dish.dto';
-import { Category } from '@prisma/client';
+import { Category, Prisma } from '@prisma/client';
 
 @Injectable()
 export class DishesService {
@@ -14,8 +14,12 @@ export class DishesService {
     });
   }
 
-  async findAll(query?: { name?: string; category?: Category; tags?: string[] }) {
-    const where: any = {};
+  async findAll(query?: {
+    name?: string;
+    category?: Category;
+    tags?: string[];
+  }) {
+    const where: Prisma.DishWhereInput = {};
 
     if (query?.name) {
       where.name = { contains: query.name, mode: 'insensitive' };
