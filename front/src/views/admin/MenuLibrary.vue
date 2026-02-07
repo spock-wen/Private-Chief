@@ -12,6 +12,10 @@
         <p class="text-text-muted text-sm">在这里管理您的私藏菜谱，作为每一次家宴的灵感源泉。</p>
       </div>
       <div class="flex gap-3">
+        <ChefButton variant="secondary" @click="handleExport" class="shadow-sm hover:shadow-primary/10">
+          <UploadCloudIcon :size="20" class="rotate-180" />
+          导出菜单
+        </ChefButton>
         <ChefButton variant="secondary" @click="isImportModalOpen = true" class="shadow-sm hover:shadow-primary/10">
           <UploadCloudIcon :size="20" />
           批量导入
@@ -238,7 +242,10 @@ import ImportDishesModal from './ImportDishesModal.vue';
 import request from '../../api/request';
 import type { Dish } from '../../types';
 import { Category } from '../../types';
+import { useToast } from '../../composables/useToast';
+import { exportDishes } from '../../utils/excel';
 
+const toast = useToast();
 const dishes = ref<Dish[]>([]);
 const searchQuery = ref('');
 const activeCategory = ref<Category | 'ALL'>('ALL');
@@ -292,7 +299,7 @@ const fetchDishes = async () => {
     dishes.value = await request.get('/dishes');
   } catch (err: any) {
     console.error(err);
-    alert('加载菜单失败，请检查网络或后端服务');
+    toast.error('加载菜单失败，请检查网络或后端服务');
   }
 };
 
@@ -318,12 +325,13 @@ const batchDelete = async () => {
   if (!confirm(`确定要删除选中的 ${selectedIds.value.length} 道菜品吗？`)) return;
   isLoading.value = true;
   try {
-    // 假设后端支持批量删除，如果不支持则循环删除
     await Promise.all(selectedIds.value.map(id => request.delete(`/dishes/${id}`)));
     selectedIds.value = [];
+    toast.success('批量删除成功');
     fetchDishes();
   } catch (err) {
     console.error(err);
+    toast.error('批量删除失败，请重试');
   } finally {
     isLoading.value = false;
   }
@@ -333,9 +341,11 @@ const deleteDish = async (id: string) => {
   if (!confirm('确定要从您的私藏菜单中移除这道菜吗？')) return;
   try {
     await request.delete(`/dishes/${id}`);
+    toast.success('菜品已删除');
     fetchDishes();
   } catch (err) {
     console.error(err);
+    toast.error('删除失败，请重试');
   }
 };
 
@@ -377,7 +387,7 @@ const saveDish = async () => {
     fetchDishes();
   } catch (err) {
     console.error('saveDish error', err);
-    alert('保存失败，请重试');
+    toast.error('保存失败，请重试');
   } finally {
     isLoading.value = false;
   }
@@ -403,7 +413,7 @@ const handleFileChange = (event: Event) => {
     
     // Check file size (e.g. 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('图片大小不能超过 5MB');
+      toast.warning('图片大小不能超过 5MB');
       return;
     }
 
@@ -414,6 +424,25 @@ const handleFileChange = (event: Event) => {
       }
     };
     reader.readAsDataURL(file);
+  }
+};
+
+const handleExport = () => {
+  if (dishes.value.length === 0) {
+    toast.warning('暂无菜品可导出');
+    return;
+  }
+
+  try {
+    // 使用当前日期作为文件名的一部分
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `私房菜菜单_${date}`;
+
+    exportDishes(dishes.value, filename);
+    toast.success(`成功导出 ${dishes.value.length} 道菜品`);
+  } catch (err) {
+    console.error('导出失败:', err);
+    toast.error('导出失败，请重试');
   }
 };
 

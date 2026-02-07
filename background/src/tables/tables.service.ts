@@ -174,7 +174,12 @@ export class TablesService {
     }
 
     const guestCount = table.guests.length;
-    const perPerson = guestCount > 0 ? totalExpense / guestCount : 0;
+
+    if (guestCount === 0) {
+      throw new ForbiddenException('暂无参与客人，无法计算 AA');
+    }
+
+    const perPerson = totalExpense / guestCount;
 
     const updatedTable = await this.prisma.table.update({
       where: { id },

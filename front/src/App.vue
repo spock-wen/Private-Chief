@@ -5,11 +5,12 @@
         <component :is="Component" />
       </transition>
     </router-view>
+    <ChefToast />
   </div>
 </template>
 
 <script setup lang="ts">
-// SpockChef App
+import ChefToast from './components/ChefToast.vue';
 </script>
 
 <style>

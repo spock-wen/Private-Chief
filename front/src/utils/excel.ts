@@ -28,14 +28,13 @@ const CATEGORY_MAP: Record<string, Category> = {
   'DRINK': Category.DRINK,
 };
 
-// 移除未使用的变量
-// const CATEGORY_LABEL_MAP: Record<Category, string> = {
-//   [Category.HOT_DISH]: '热菜',
-//   [Category.COLD_DISH]: '凉菜',
-//   [Category.SOUP]: '汤品',
-//   [Category.STAPLE]: '主食',
-//   [Category.DRINK]: '饮料',
-// };
+const CATEGORY_LABEL_MAP: Record<Category, string> = {
+  [Category.HOT_DISH]: '热菜',
+  [Category.COLD_DISH]: '凉菜',
+  [Category.SOUP]: '汤品',
+  [Category.STAPLE]: '主食',
+  [Category.DRINK]: '饮料',
+};
 
 export const generateTemplate = () => {
   const headers = ['菜品名称', '分类', '描述', '标签', '图片链接'];
@@ -118,4 +117,39 @@ export const parseExcel = async (file: File): Promise<ParsedDish[]> => {
     reader.onerror = (err) => reject(err);
     reader.readAsBinaryString(file);
   });
+};
+
+/**
+ * 导出菜品数据为 Excel 文件
+ * @param dishes 菜品列表
+ * @param filename 文件名（不含扩展名）
+ */
+export const exportDishes = (dishes: Dish[], filename: string = '私房菜菜单') => {
+  // 将菜品数据转换为 Excel 行格式
+  const rows: ExcelDishRow[] = dishes.map(dish => ({
+    '菜品名称': dish.name,
+    '分类': CATEGORY_LABEL_MAP[dish.category],
+    '描述': dish.description || '',
+    '标签': dish.tags.join(', '),
+    '图片链接': dish.image || '',
+  }));
+
+  // 创建工作表
+  const ws = XLSX.utils.json_to_sheet(rows);
+
+  // 设置列宽
+  ws['!cols'] = [
+    { wch: 20 }, // 菜品名称
+    { wch: 10 }, // 分类
+    { wch: 30 }, // 描述
+    { wch: 20 }, // 标签
+    { wch: 40 }, // 图片链接
+  ];
+
+  // 创建工作簿并添加工作表
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '菜单');
+
+  // 导出文件
+  XLSX.writeFile(wb, `${filename}.xlsx`);
 };

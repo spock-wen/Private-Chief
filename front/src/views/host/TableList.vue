@@ -118,9 +118,11 @@ import request from '../../api/request';
 import type { Table } from '../../types';
 import { TableStatus } from '../../types';
 import { useUserStore } from '../../stores/useUserStore';
+import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const userStore = useUserStore();
+const toast = useToast();
 const tables = ref<Table[]>([]);
 const isCreateModalOpen = ref(false);
 const isLoading = ref(false);
@@ -144,6 +146,7 @@ const fetchTables = async () => {
     tables.value = await request.get('/tables', { params: { sessionId: userStore.sessionId } });
   } catch (err) {
     console.error(err);
+    toast.error('加载饭桌列表失败，请检查网络连接');
   }
 };
 
@@ -151,7 +154,7 @@ const createTable = async () => {
   console.log('createTable called', newTable);
   if (!newTable.name || !newTable.time || !newTable.hostName) {
     console.warn('createTable validation failed');
-    alert('请填写完整信息');
+    toast.warning('请填写完整信息');
     return;
   }
   isLoading.value = true;
@@ -173,7 +176,7 @@ const createTable = async () => {
     router.push(`/table/${table.id}`);
   } catch (err: any) {
     console.error('createTable error', err);
-    alert('创建失败：' + (err.response?.data?.message || err.message));
+    toast.error('创建失败：' + (err.response?.data?.message || err.message));
   } finally {
     isLoading.value = false;
   }

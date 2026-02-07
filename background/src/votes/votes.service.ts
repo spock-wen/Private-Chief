@@ -5,10 +5,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { TableStatus } from '@prisma/client';
+import { VotesGateway } from './votes.gateway';
 
 @Injectable()
 export class VotesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private votesGateway: VotesGateway,
+  ) {}
 
   async vote(tableId: string, sessionId: string, dishId: string) {
     const table = await this.prisma.table.findUnique({
@@ -26,7 +30,7 @@ export class VotesService {
     });
     if (!guest) throw new ForbiddenException('You must join the table first');
 
-    return this.prisma.vote.upsert({
+    const vote = await this.prisma.vote.upsert({
       where: {
         guestId_dishId_tableId: {
           guestId: guest.id,
@@ -41,6 +45,16 @@ export class VotesService {
       },
       update: {}, // 如果已存在则不操作
     });
+
+    // 广播投票更新事件
+    this.votesGateway.broadcastVoteUpdate(tableId, {
+      action: 'vote',
+      dishId,
+      guestId: guest.id,
+      guestName: guest.name,
+    });
+
+    return vote;
   }
 
   async unvote(tableId: string, sessionId: string, dishId: string) {
@@ -58,7 +72,7 @@ export class VotesService {
     });
     if (!guest) throw new ForbiddenException('Guest not found');
 
-    return this.prisma.vote.delete({
+    const result = await this.prisma.vote.delete({
       where: {
         guestId_dishId_tableId: {
           guestId: guest.id,
@@ -67,6 +81,16 @@ export class VotesService {
         },
       },
     });
+
+    // 广播取消投票事件
+    this.votesGateway.broadcastVoteUpdate(tableId, {
+      action: 'unvote',
+      dishId,
+      guestId: guest.id,
+      guestName: guest.name,
+    });
+
+    return result;
   }
 
   async getHeatmap(tableId: string) {

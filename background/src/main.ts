@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { json, urlencoded } from 'express';
 
@@ -8,6 +9,9 @@ async function bootstrap() {
   // Increase payload size limit for large image uploads (Base64)
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
+
+  // 启用全局输入验证
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   // Add global API prefix
   app.setGlobalPrefix('api');

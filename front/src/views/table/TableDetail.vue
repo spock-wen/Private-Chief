@@ -283,10 +283,13 @@
               <span class="text-text-muted">参与人数</span>
               <span class="font-bold text-text-dark">{{ table.guests.length }} 位</span>
             </div>
-            <div class="pt-4 border-t border-primary/5 flex justify-between items-center">
+            <div v-if="table.guests.length === 0" class="pt-4 border-t border-primary/5 text-center">
+              <p class="text-sm text-text-muted italic">暂无参与客人，无法计算 AA</p>
+            </div>
+            <div v-else class="pt-4 border-t border-primary/5 flex justify-between items-center">
               <span class="text-xs font-bold text-text-dark uppercase tracking-widest">人均 AA</span>
               <div class="text-right">
-                <span class="text-3xl font-bold text-primary serif-title">¥ {{ (table.totalExpense / (table.guests.length || 1)).toFixed(2) }}</span>
+                <span class="text-3xl font-bold text-primary serif-title">¥ {{ (table.totalExpense / table.guests.length).toFixed(2) }}</span>
                 <p class="text-[10px] text-text-muted/40 mt-1 italic">自动计算，公开透明</p>
               </div>
             </div>
@@ -532,24 +535,27 @@
 
 <script setup lang="ts">
 // ... Logic remains largely the same, but imports and reactive refs are updated ...
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { 
-  CalendarIcon, MapPinIcon, UtensilsCrossedIcon, PlusCircleIcon, 
-  ArrowRightIcon, LockIcon, CheckCircleIcon, HeartIcon, FlameIcon, 
+import {
+  CalendarIcon, MapPinIcon, UtensilsCrossedIcon, PlusCircleIcon,
+  ArrowRightIcon, LockIcon, CheckCircleIcon, HeartIcon, FlameIcon,
   CopyIcon, ReceiptIcon, ArrowLeftIcon, CheckIcon,
   TrophyIcon, UsersIcon, TrendingUpIcon
 } from 'lucide-vue-next';
+import { io, Socket } from 'socket.io-client';
 import ChefButton from '../../components/ChefButton.vue';
 import ChefModal from '../../components/ChefModal.vue';
 import request from '../../api/request';
 import type { Table, Dish } from '../../types';
 import { TableStatus, Category } from '../../types';
 import { useUserStore } from '../../stores/useUserStore';
+import { useToast } from '../../composables/useToast';
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
+const toast = useToast();
 const table = ref<Table | null>(null);
 const allDishes = ref<Dish[]>([]);
 const isHost = computed(() => table.value?.hostSessionId === userStore.sessionId);
@@ -561,6 +567,8 @@ const isConfirmingMenu = ref(false);
 const isVoterMatrixOpen = ref(false);
 const isLoading = ref(false);
 const votingDishId = ref<string | null>(null);
+
+let socket: Socket | null = null;
 
 const joinForm = ref({
   name: userStore.guestName || '',
@@ -661,7 +669,7 @@ const fetchTable = async () => {
     console.error('获取饭桌详情失败:', err);
     // 只有在初始加载失败时才弹窗，避免静默刷新干扰
     if (!table.value) {
-      alert('加载饭桌详情失败，请检查网络连接或链接是否有效');
+      toast.error('加载饭桌详情失败，请检查网络连接或链接是否有效');
     }
   }
 };
@@ -680,6 +688,7 @@ const handleJoinTable = async () => {
     await fetchTable();
   } catch (err) {
     console.error(err);
+    toast.error('加入饭桌失败，请重试');
   } finally {
     isLoading.value = false;
   }
@@ -690,6 +699,7 @@ const fetchAllDishes = async () => {
     allDishes.value = await request.get('/dishes');
   } catch (err) {
     console.error(err);
+    toast.error('加载菜品列表失败');
   }
 };
 
@@ -739,7 +749,7 @@ const handleLockMenu = async () => {
     await fetchTable();
   } catch (err: any) {
     console.error('定稿失败:', err);
-    alert('定稿失败：' + (err.response?.data?.message || err.message));
+    toast.error('定稿失败：' + (err.response?.data?.message || err.message));
   } finally {
     isLoading.value = false;
   }
@@ -757,7 +767,7 @@ const saveSelectedDishes = async () => {
     fetchTable();
   } catch (err: any) {
     console.error(err);
-    alert('保存失败：' + (err.response?.data?.message || err.message));
+    toast.error('保存失败：' + (err.response?.data?.message || err.message));
   } finally {
     isLoading.value = false;
   }
@@ -775,7 +785,7 @@ const saveBilling = async () => {
     fetchTable();
   } catch (err: any) {
     console.error(err);
-    alert('结算失败：' + (err.response?.data?.message || err.message));
+    toast.error('结算失败：' + (err.response?.data?.message || err.message));
   } finally {
     isLoading.value = false;
   }
@@ -807,7 +817,7 @@ const advanceStatus = async () => {
     await fetchTable();
   } catch (err: any) {
     console.error('状态更新失败:', err);
-    alert('操作失败：' + (err.response?.data?.message || err.message));
+    toast.error('操作失败：' + (err.response?.data?.message || err.message));
   } finally {
     isLoading.value = false;
   }
@@ -832,7 +842,7 @@ const toggleVote = async (dishId: string) => {
   } catch (err: any) {
     console.error('投票操作失败:', err);
     const errorMsg = err.response?.data?.message || err.message || '网络请求失败';
-    alert(`操作失败: ${errorMsg}`);
+    toast.error(`操作失败: ${errorMsg}`);
   } finally {
     votingDishId.value = null;
   }
@@ -861,12 +871,45 @@ const formatDate = (dateStr: string) => {
 
 const copyLink = () => {
   navigator.clipboard.writeText(inviteUrl.value);
-  alert('邀约链接已复制，去发送给好友吧！');
+  toast.success('邀约链接已复制，去发送给好友吧！');
+};
+
+const initWebSocket = () => {
+  const tableId = route.params.id as string;
+
+  // 连接到后端 WebSocket 服务器
+  socket = io('http://localhost:8070', {
+    transports: ['websocket', 'polling'],
+  });
+
+  socket.on('connect', () => {
+    console.log('WebSocket connected');
+  });
+
+  socket.on('disconnect', () => {
+    console.log('WebSocket disconnected');
+  });
+
+  // 监听该饭桌的投票更新事件
+  socket.on(`table:${tableId}:vote`, (data) => {
+    console.log('Received vote update:', data);
+    // 收到投票更新后，静默刷新饭桌数据
+    fetchTable();
+  });
 };
 
 onMounted(() => {
   fetchTable();
   fetchAllDishes();
+  initWebSocket();
+});
+
+onUnmounted(() => {
+  // 组件卸载时断开 WebSocket 连接
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
 });
 </script>
 

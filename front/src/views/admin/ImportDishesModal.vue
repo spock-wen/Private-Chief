@@ -146,6 +146,9 @@ import { generateTemplate, parseExcel } from '../../utils/excel';
 import type { ParsedDish } from '../../utils/excel';
 import { Category } from '../../types';
 import request from '../../api/request';
+import { useToast } from '../../composables/useToast';
+
+const toast = useToast();
 
 defineProps<{
   modelValue: boolean;
@@ -214,7 +217,7 @@ const processFile = async (file: File) => {
     step.value = 'preview';
   } catch (err) {
     console.error(err);
-    alert('解析文件失败，请检查文件格式是否正确');
+    toast.error('解析文件失败，请检查文件格式是否正确');
   }
 };
 
