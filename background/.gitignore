@@ -41,3 +41,6 @@ coverage
 # System files
 .DS_Store
 Thumbs.db
+
+# Package lock files
+package-lock.json

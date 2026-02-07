@@ -80,3 +80,11 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# AI tools
+.claude/
+.trae/
+
+# Package lock files (use npm ci to install from package.json)
+package-lock.json
+**/package-lock.json
