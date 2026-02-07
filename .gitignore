@@ -81,8 +81,8 @@ Thumbs.db
 *.swo
 *~
 
-# AI tools
-.claude/
+# AI tools settings (keep skills, ignore local settings)
+.claude/settings.local.json
 .trae/
 
 # Package lock files (use npm ci to install from package.json)
