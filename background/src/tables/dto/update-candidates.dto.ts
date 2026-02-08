@@ -1,4 +1,4 @@
-import { IsArray, IsString, IsNotEmpty } from 'class-validator';
+import { IsArray, IsString, IsOptional } from 'class-validator';
 
 export class UpdateCandidatesDto {
   @IsArray()
@@ -6,6 +6,6 @@ export class UpdateCandidatesDto {
   dishIds: string[];
 
   @IsString()
-  @IsNotEmpty()
-  sessionId: string;
+  @IsOptional()  // 改为可选，因为后端使用 JWT 认证，不需要 sessionId
+  sessionId?: string;
 }

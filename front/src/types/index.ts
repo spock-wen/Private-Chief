@@ -50,12 +50,27 @@ export interface Table {
   name: string;
   time: string;
   location?: string;
+  address?: string;
+  addressDetail?: string;
+  latitude?: number;
+  longitude?: number;
   status: TableStatus;
   totalExpense?: number;
-  hostSessionId: string;
+  familyId: string;
+  creatorId: string;  // 创建者用户ID（用于权限判断）
+  creator?: {
+    id: string;
+    nickname: string;
+    avatar?: string;
+  };
+  family?: {
+    id: string;
+    name: string;
+  };
   candidateDishes: Dish[];
   finalDishIds: string[];
   finalDishes: Dish[];
   guests: Guest[];
   createdAt: string;
+  updatedAt: string;
 }

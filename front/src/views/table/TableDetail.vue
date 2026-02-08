@@ -328,9 +328,16 @@
     </div>
 
     <!-- Modals -->
-    <!-- Join Table Modal -->
+    <!-- Join Table Modal (仅匿名用户) -->
     <ChefModal v-model="isJoinModalOpen" title="加入围炉" :close-on-outside-click="false" :show-close="false">
       <div class="space-y-6">
+        <div class="bg-primary/5 rounded-xl p-4 flex items-start gap-3">
+          <InfoIcon class="text-primary shrink-0 mt-0.5" :size="18" />
+          <div class="text-sm text-text-muted">
+            <p class="font-bold text-text-dark mb-1">访客模式</p>
+            <p class="text-xs">您正在以访客身份加入饭桌。如需完整功能，请先<router-link to="/login" class="text-primary underline">登录</router-link>或<router-link to="/register" class="text-primary underline">注册</router-link>。</p>
+          </div>
+        </div>
         <p class="text-sm text-text-muted">欢迎来到主人的私人宴请，请告知您的称呼与用餐偏好。</p>
         <div class="space-y-4">
           <div class="space-y-1.5">
@@ -541,7 +548,7 @@ import {
   CalendarIcon, MapPinIcon, UtensilsCrossedIcon, PlusCircleIcon,
   ArrowRightIcon, LockIcon, CheckCircleIcon, HeartIcon, FlameIcon,
   CopyIcon, ReceiptIcon, ArrowLeftIcon, CheckIcon,
-  TrophyIcon, UsersIcon, TrendingUpIcon
+  TrophyIcon, UsersIcon, TrendingUpIcon, InfoIcon
 } from 'lucide-vue-next';
 import { io, Socket } from 'socket.io-client';
 import ChefButton from '../../components/ChefButton.vue';
@@ -550,15 +557,31 @@ import request from '../../api/request';
 import type { Table, Dish } from '../../types';
 import { TableStatus, Category } from '../../types';
 import { useUserStore } from '../../stores/useUserStore';
+import { useAuthStore } from '../../stores/useAuthStore';
 import { useToast } from '../../composables/useToast';
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
+const authStore = useAuthStore();
 const toast = useToast();
 const table = ref<Table | null>(null);
 const allDishes = ref<Dish[]>([]);
-const isHost = computed(() => table.value?.hostSessionId === userStore.sessionId);
+
+// 权限判断：已登录用户基于 userId，匿名用户基于 sessionId
+const isHost = computed(() => {
+  if (!table.value) return false;
+  
+  // 如果用户已登录，使用 userId 判断
+  if (authStore.isLoggedIn && authStore.user) {
+    return table.value.creatorId === authStore.user.id;
+  }
+  
+  // 匿名用户：检查是否是第一个加入的访客（创建者会自动加入为访客）
+  // 注意：这个逻辑可能不准确，因为匿名用户无法成为创建者
+  return false;
+});
+
 const isGuest = computed(() => table.value?.guests.some(g => g.sessionId === userStore.sessionId));
 const isJoinModalOpen = ref(false);
 const isPickerOpen = ref(false);
@@ -644,9 +667,12 @@ const getCategoryRank = (dishId: string, category: Category) => {
   return index > -1 ? index + 1 : null;
 };
 
+const hasJoinedBefore = ref(false);
+
 const fetchTable = async () => {
   try {
     const data: Table = await request.get(`/tables/${route.params.id}`);
+    const isFirstLoad = !table.value;
     table.value = data;
     selectedDishIds.value = data.candidateDishes.map(d => d.id);
     
@@ -661,9 +687,23 @@ const fetchTable = async () => {
 
     if (data.totalExpense) billingAmount.value = data.totalExpense;
 
-    // 如果不是主人，且还没加入，且饭桌未结束，弹出加入弹窗
-    if (!isHost.value && !isGuest.value && table.value?.status !== TableStatus.ARCHIVED) {
-      isJoinModalOpen.value = true;
+    // 检查用户是否已经加入
+    const currentIsGuest = data.guests.some(g => g.sessionId === userStore.sessionId);
+    
+    // 检查是否是创建者（已登录用户）
+    const currentIsHost = authStore.isLoggedIn && authStore.user 
+      ? data.creatorId === authStore.user.id 
+      : false;
+    
+    // 如果是首次加载且用户未加入
+    if (isFirstLoad && !currentIsHost && !currentIsGuest && data.status !== TableStatus.ARCHIVED && !hasJoinedBefore.value) {
+      // 如果用户已登录，自动以真实身份加入
+      if (authStore.isLoggedIn && authStore.user) {
+        await autoJoinAsAuthenticatedUser();
+      } else {
+        // 如果是匿名用户，弹出输入昵称的弹窗
+        isJoinModalOpen.value = true;
+      }
     }
   } catch (err: any) {
     console.error('获取饭桌详情失败:', err);
@@ -671,6 +711,26 @@ const fetchTable = async () => {
     if (!table.value) {
       toast.error('加载饭桌详情失败，请检查网络连接或链接是否有效');
     }
+  }
+};
+
+// 已登录用户自动加入
+const autoJoinAsAuthenticatedUser = async () => {
+  if (!authStore.user) return;
+  
+  try {
+    await request.post(`/tables/${route.params.id}/guests`, {
+      sessionId: userStore.sessionId,
+      name: authStore.user.nickname,
+      preferences: ''
+    });
+    hasJoinedBefore.value = true;
+    await fetchTable();
+    toast.success(`欢迎 ${authStore.user.nickname}！`);
+  } catch (err: any) {
+    console.error('自动加入失败:', err);
+    // 如果自动加入失败，降级为手动输入
+    isJoinModalOpen.value = true;
   }
 };
 
@@ -684,6 +744,7 @@ const handleJoinTable = async () => {
       preferences: joinForm.value.preferences
     });
     userStore.setGuestName(joinForm.value.name);
+    hasJoinedBefore.value = true;
     isJoinModalOpen.value = false;
     await fetchTable();
   } catch (err) {
@@ -731,21 +792,31 @@ const toggleFinalSelection = (id: string) => {
 const handleLockMenu = async () => {
   if (!table.value || isLoading.value) return;
   
+  // 检查权限：必须是已登录用户且是创建者
+  if (!authStore.isLoggedIn || !authStore.user) {
+    toast.error('请先登录后再操作');
+    return;
+  }
+  
+  if (table.value.creatorId !== authStore.user.id) {
+    toast.error('只有饭桌创建者可以锁定菜单');
+    return;
+  }
+  
   isLoading.value = true;
   try {
     // 1. 先保存最终选定的菜品 ID 列表
     await request.patch(`/tables/${table.value.id}/final-selection`, {
-      dishIds: finalSelectionIds.value,
-      sessionId: userStore.sessionId
+      dishIds: finalSelectionIds.value
     });
 
     // 2. 然后推进状态至 LOCKED
     await request.patch(`/tables/${table.value.id}/status`, { 
-      status: TableStatus.LOCKED,
-      sessionId: userStore.sessionId
+      status: TableStatus.LOCKED
     });
 
     isConfirmingMenu.value = false;
+    toast.success('菜单已锁定');
     await fetchTable();
   } catch (err: any) {
     console.error('定稿失败:', err);
@@ -757,13 +828,26 @@ const handleLockMenu = async () => {
 
 const saveSelectedDishes = async () => {
   if (!table.value) return;
+  
+  // 检查权限：必须是已登录用户且是创建者
+  if (!authStore.isLoggedIn || !authStore.user) {
+    toast.error('请先登录后再操作');
+    return;
+  }
+  
+  if (table.value.creatorId !== authStore.user.id) {
+    toast.error('只有饭桌创建者可以修改候选菜品');
+    return;
+  }
+  
   isLoading.value = true;
   try {
     await request.patch(`/tables/${table.value.id}/candidates`, { 
       dishIds: selectedDishIds.value,
-      sessionId: userStore.sessionId
+      sessionId: userStore.sessionId  // DTO 验证需要，虽然后端不使用
     });
     isPickerOpen.value = false;
+    toast.success('候选菜品已更新');
     fetchTable();
   } catch (err: any) {
     console.error(err);
@@ -775,13 +859,25 @@ const saveSelectedDishes = async () => {
 
 const saveBilling = async () => {
   if (!table.value || billingAmount.value === null) return;
+  
+  // 检查权限：必须是已登录用户且是创建者
+  if (!authStore.isLoggedIn || !authStore.user) {
+    toast.error('请先登录后再操作');
+    return;
+  }
+  
+  if (table.value.creatorId !== authStore.user.id) {
+    toast.error('只有饭桌创建者可以录入账单');
+    return;
+  }
+  
   isLoading.value = true;
   try {
     await request.patch(`/tables/${table.value.id}/billing`, { 
-      totalExpense: billingAmount.value,
-      sessionId: userStore.sessionId 
+      totalExpense: billingAmount.value
     });
     isBillingModalOpen.value = false;
+    toast.success('账单已录入');
     fetchTable();
   } catch (err: any) {
     console.error(err);
@@ -793,6 +889,17 @@ const saveBilling = async () => {
 
 const advanceStatus = async () => {
   if (!table.value || isLoading.value) return;
+
+  // 检查权限：必须是已登录用户且是创建者
+  if (!authStore.isLoggedIn || !authStore.user) {
+    toast.error('请先登录后再操作');
+    return;
+  }
+  
+  if (table.value.creatorId !== authStore.user.id) {
+    toast.error('只有饭桌创建者可以修改状态');
+    return;
+  }
 
   // 如果是投票中，点击进入定稿确认模式
   if (table.value.status === TableStatus.VOTING && !isConfirmingMenu.value) {
@@ -810,10 +917,10 @@ const advanceStatus = async () => {
   isLoading.value = true;
   try {
     await request.patch(`/tables/${table.value.id}/status`, { 
-      status: nextStatusMap[table.value.status],
-      sessionId: userStore.sessionId
+      status: nextStatusMap[table.value.status]
     });
     isConfirmingMenu.value = false;
+    toast.success('状态已更新');
     await fetchTable();
   } catch (err: any) {
     console.error('状态更新失败:', err);

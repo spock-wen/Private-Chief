@@ -13,6 +13,10 @@ request.interceptors.request.use(
     const userStore = useUserStore();
     const authStore = useAuthStore();
 
+    // 禁用缓存（解决 304 问题）
+    config.headers['Cache-Control'] = 'no-cache';
+    config.headers['Pragma'] = 'no-cache';
+
     // 如果有会话ID，添加到请求头（用于匿名客人）
     if (userStore.sessionId) {
       config.headers['X-Session-ID'] = userStore.sessionId;
@@ -42,6 +46,7 @@ request.interceptors.response.use(
       userStore.initializeSession(newSessionId);
     }
 
+    // 返回 response.data（axios 默认行为）
     return response.data;
   },
   async (error) => {
@@ -92,4 +97,13 @@ request.interceptors.response.use(
   }
 );
 
-export default request;
+// 创建便捷方法
+const api = {
+  get: <T = any>(url: string, config?: any) => request.get<T, T>(url, config),
+  post: <T = any>(url: string, data?: any, config?: any) => request.post<T, T>(url, data, config),
+  put: <T = any>(url: string, data?: any, config?: any) => request.put<T, T>(url, data, config),
+  patch: <T = any>(url: string, data?: any, config?: any) => request.patch<T, T>(url, data, config),
+  delete: <T = any>(url: string, config?: any) => request.delete<T, T>(url, config),
+};
+
+export default api;

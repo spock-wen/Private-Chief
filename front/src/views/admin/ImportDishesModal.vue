@@ -147,8 +147,10 @@ import type { ParsedDish } from '@/utils/excel';
 import { Category } from '@/types';
 import request from '@/api/request';
 import { useToast } from '@/composables/useToast';
+import { useFamilyStore } from '@/stores/useFamilyStore';
 
 const toast = useToast();
+const familyStore = useFamilyStore();
 
 defineProps<{
   modelValue: boolean;
@@ -225,6 +227,13 @@ const confirmImport = async () => {
   const validItems = parsedData.value.filter(d => d.isValid);
   if (validItems.length === 0) return;
 
+  // 获取当前家庭 ID
+  const familyId = familyStore.currentFamily?.id;
+  if (!familyId) {
+    toast.error('请先选择一个家庭');
+    return;
+  }
+
   isImporting.value = true;
   progress.value = 0;
   successCount.value = 0;
@@ -234,14 +243,16 @@ const confirmImport = async () => {
   // Sequential is safer for order and server load.
   for (const item of validItems) {
     try {
-      // Clean data for API
+      // Clean data for API - 添加 familyId
       const payload = {
         name: item.name,
         category: item.category,
         description: item.description,
         tags: item.tags,
-        image: item.image
+        image: item.image,
+        familyId: familyId
       };
+      console.log('Importing dish with payload:', payload);
       await request.post('/dishes', payload);
       successCount.value++;
     } catch (err) {

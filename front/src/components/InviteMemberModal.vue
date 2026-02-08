@@ -123,11 +123,35 @@ watch(isOpen, (val) => {
 const loadInvitationCode = async () => {
   try {
     const familyId = props.familyId || familyStore.currentFamily?.id;
-    if (!familyId) return;
+    if (!familyId) {
+      console.error('No familyId available');
+      toast.error('请先选择一个家庭');
+      return;
+    }
 
+    console.log('Loading invitation code for family:', familyId);
     const response = await request.post('/families/invitations', { familyId });
-    invitationCode.value = response.code;
+    console.log('Invitation response:', response);
+    
+    // 处理不同的响应格式
+    if (typeof response === 'string') {
+      invitationCode.value = response;
+    } else if (response.inviteCode) {
+      // 注意：后端返回的字段是 inviteCode，不是 code 或 invitationCode
+      invitationCode.value = response.inviteCode;
+    } else if (response.code) {
+      invitationCode.value = response.code;
+    } else if (response.invitationCode) {
+      invitationCode.value = response.invitationCode;
+    } else {
+      console.error('Unexpected response format:', response);
+      console.error('Response keys:', Object.keys(response));
+      toast.error('获取邀请码失败：响应格式不正确');
+    }
+    
+    console.log('Final invitation code:', invitationCode.value);
   } catch (error: any) {
+    console.error('Failed to load invitation code:', error);
     toast.error('获取邀请码失败：' + (error.response?.data?.message || error.message));
   }
 };

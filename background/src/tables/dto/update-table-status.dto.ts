@@ -1,4 +1,4 @@
-import { IsEnum, IsString, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsString, IsOptional } from 'class-validator';
 import { TableStatus } from '@prisma/client';
 
 export class UpdateTableStatusDto {
@@ -6,6 +6,6 @@ export class UpdateTableStatusDto {
   status: TableStatus;
 
   @IsString()
-  @IsNotEmpty()
-  sessionId: string;
+  @IsOptional()  // 改为可选，因为后端使用 JWT 认证
+  sessionId?: string;
 }

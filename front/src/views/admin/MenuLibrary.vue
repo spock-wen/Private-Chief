@@ -302,12 +302,21 @@ const fetchDishes = async () => {
       toast.warning('请先选择一个家庭');
       return;
     }
-    dishes.value = await request.get('/dishes', {
+    
+    console.log('Fetching dishes for family:', familyStore.currentFamily.id);
+    const response = await request.get('/dishes', {
       params: { familyId: familyStore.currentFamily.id },
     });
+    
+    console.log('Dishes response:', response);
+    dishes.value = Array.isArray(response) ? response : [];
+    
+    if (dishes.value.length === 0) {
+      console.log('No dishes found');
+    }
   } catch (err: any) {
-    console.error(err);
-    toast.error('加载菜单失败，请检查网络或后端服务');
+    console.error('Failed to fetch dishes:', err);
+    toast.error('加载菜单失败：' + (err.response?.data?.message || err.message));
   }
 };
 

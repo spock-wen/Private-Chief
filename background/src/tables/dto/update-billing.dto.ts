@@ -1,4 +1,4 @@
-import { IsNumber, Min, IsString, IsNotEmpty } from 'class-validator';
+import { IsNumber, Min, IsString, IsOptional } from 'class-validator';
 
 export class UpdateBillingDto {
   @IsNumber()
@@ -6,6 +6,6 @@ export class UpdateBillingDto {
   totalExpense: number;
 
   @IsString()
-  @IsNotEmpty()
-  sessionId: string;
+  @IsOptional()  // 改为可选，因为后端使用 JWT 认证
+  sessionId?: string;
 }
