@@ -1,5 +1,29 @@
 <template>
   <div class="min-h-screen py-12 px-4 max-w-7xl mx-auto space-y-12 animate-fade-in-up">
+    <!-- 顶部导航 -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <FamilySwitcher />
+      </div>
+      <div class="flex items-center gap-4">
+        <button
+          v-if="isOwner"
+          @click="showInviteModal = true"
+          class="px-4 py-2 text-sm font-bold text-primary hover:bg-primary/5 rounded-custom transition-all flex items-center gap-2"
+        >
+          <UsersIcon :size="16" />
+          邀请管理员
+        </button>
+        <span class="text-sm text-text-muted">{{ user?.nickname }}</span>
+        <button
+          @click="handleLogout"
+          class="text-sm text-text-muted hover:text-primary transition-colors"
+        >
+          退出登录
+        </button>
+      </div>
+    </div>
+
     <!-- Hero Section -->
     <header class="text-center space-y-4">
       <h1 class="serif-title text-6xl font-bold text-text-dark tracking-tight">
@@ -7,6 +31,9 @@
       </h1>
       <p class="text-text-muted text-lg max-w-2xl mx-auto">
         为您的家宴营造温暖、私密且专业的数字化助手。从灵感筹备到轻松结算，让每一次聚餐都成为珍贵回忆。
+      </p>
+      <p v-if="currentFamily" class="text-sm text-primary font-bold">
+        当前家庭：{{ currentFamily.name }}
       </p>
     </header>
 
@@ -69,28 +96,56 @@
     <footer class="text-center pt-8 border-t border-primary/5">
       <p class="text-text-muted/40 text-xs font-medium uppercase tracking-[0.2em]">Crafted for private dining excellence</p>
     </footer>
+
+    <!-- 邀请管理员弹窗 -->
+    <InviteMemberModal v-model="showInviteModal" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { UtensilsIcon, BookOpenIcon, ArrowRightIcon, SparklesIcon } from 'lucide-vue-next';
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { UtensilsIcon, BookOpenIcon, ArrowRightIcon, SparklesIcon, UsersIcon } from 'lucide-vue-next';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useFamilyStore } from '@/stores/useFamilyStore';
+import FamilySwitcher from '@/components/FamilySwitcher.vue';
+import InviteMemberModal from '@/components/InviteMemberModal.vue';
 import request from '../api/request';
 
+const router = useRouter();
+const authStore = useAuthStore();
+const familyStore = useFamilyStore();
+
 const dishCount = ref(0);
+const showInviteModal = ref(false);
+const user = computed(() => authStore.user);
+const currentFamily = computed(() => familyStore.currentFamily);
+const isOwner = computed(() => currentFamily.value?.role === 'OWNER');
 
 const fetchDishCount = async () => {
   try {
-    const dishes = await request.get('/dishes');
-    if (Array.isArray(dishes)) {
-      dishCount.value = dishes.length;
+    if (currentFamily.value) {
+      const dishes = await request.get('/dishes', {
+        params: { familyId: currentFamily.value.id },
+      });
+      if (Array.isArray(dishes)) {
+        dishCount.value = dishes.length;
+      }
     }
   } catch (error) {
     console.error('Failed to fetch dish count:', error);
   }
 };
 
-onMounted(fetchDishCount);
+const handleLogout = () => {
+  authStore.logout();
+  familyStore.clear();
+  router.push('/login');
+};
+
+onMounted(() => {
+  fetchDishCount();
+});
 </script>
 
 <style scoped>

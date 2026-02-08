@@ -20,7 +20,7 @@
 
 <script setup lang="ts">
 import { CheckCircleIcon, XCircleIcon, AlertTriangleIcon, InfoIcon } from 'lucide-vue-next';
-import { useToast } from '../composables/useToast';
+import { useToast } from '@/composables/useToast';
 
 const { toasts } = useToast();
 

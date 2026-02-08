@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import crypto from 'node:crypto'
+import path from 'node:path'
 
 // Polyfill for Node.js < 20.12.0 where crypto.hash is not available
 if (typeof crypto.hash !== 'function') {
@@ -12,6 +13,11 @@ if (typeof crypto.hash !== 'function') {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
+  },
   server: {
     proxy: {
       '/api': {

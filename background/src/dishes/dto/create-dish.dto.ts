@@ -24,4 +24,7 @@ export class CreateDishDto {
   @IsString()
   @IsOptional()
   allergens?: string;
+
+  @IsString()
+  familyId: string; // 所属家庭ID
 }

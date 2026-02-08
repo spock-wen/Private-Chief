@@ -140,13 +140,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { UploadCloudIcon, FileSpreadsheetIcon, CheckCircleIcon, AlertCircleIcon, InfoIcon } from 'lucide-vue-next';
-import ChefModal from '../../components/ChefModal.vue';
-import ChefButton from '../../components/ChefButton.vue';
-import { generateTemplate, parseExcel } from '../../utils/excel';
-import type { ParsedDish } from '../../utils/excel';
-import { Category } from '../../types';
-import request from '../../api/request';
-import { useToast } from '../../composables/useToast';
+import ChefModal from '@/components/ChefModal.vue';
+import ChefButton from '@/components/ChefButton.vue';
+import { generateTemplate, parseExcel } from '@/utils/excel';
+import type { ParsedDish } from '@/utils/excel';
+import { Category } from '@/types';
+import request from '@/api/request';
+import { useToast } from '@/composables/useToast';
 
 const toast = useToast();
 

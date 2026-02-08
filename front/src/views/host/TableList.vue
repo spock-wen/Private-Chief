@@ -108,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue';
+import { ref, onMounted, reactive, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { PlusIcon, UtensilsIcon, CalendarIcon, MapPinIcon, ChevronRightIcon } from 'lucide-vue-next';
 import ChefButton from '../../components/ChefButton.vue';
@@ -118,20 +118,26 @@ import request from '../../api/request';
 import type { Table } from '../../types';
 import { TableStatus } from '../../types';
 import { useUserStore } from '../../stores/useUserStore';
+import { useAuthStore } from '../../stores/useAuthStore';
+import { useFamilyStore } from '../../stores/useFamilyStore';
 import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
 const userStore = useUserStore();
+const authStore = useAuthStore();
+const familyStore = useFamilyStore();
 const toast = useToast();
 const tables = ref<Table[]>([]);
 const isCreateModalOpen = ref(false);
 const isLoading = ref(false);
 
+const currentFamily = computed(() => familyStore.currentFamily);
+
 const newTable = reactive({
   name: '',
   time: '',
   location: '',
-  hostName: userStore.guestName || ''
+  hostName: authStore.user?.nickname || ''
 });
 
 const statusConfig: Record<TableStatus, { label: string; class: string }> = {
@@ -143,7 +149,13 @@ const statusConfig: Record<TableStatus, { label: string; class: string }> = {
 
 const fetchTables = async () => {
   try {
-    tables.value = await request.get('/tables', { params: { sessionId: userStore.sessionId } });
+    if (!currentFamily.value) {
+      toast.warning('请先选择一个家庭');
+      return;
+    }
+    tables.value = await request.get('/tables', { 
+      params: { familyId: currentFamily.value.id } 
+    });
   } catch (err) {
     console.error(err);
     toast.error('加载饭桌列表失败，请检查网络连接');
@@ -157,22 +169,26 @@ const createTable = async () => {
     toast.warning('请填写完整信息');
     return;
   }
+
+  if (!currentFamily.value) {
+    toast.error('请先选择一个家庭');
+    return;
+  }
+
   isLoading.value = true;
   try {
     // 确保时间格式为 ISO 字符串
     const payload = {
       ...newTable,
       time: new Date(newTable.time).toISOString(),
-      hostSessionId: userStore.sessionId
+      familyId: currentFamily.value.id,
     };
     console.log('sending payload', payload);
     const table: Table = await request.post('/tables', payload);
     console.log('createTable success', table);
     
-    // 更新本地存储的昵称
-    userStore.setGuestName(newTable.hostName);
-    
     isCreateModalOpen.value = false;
+    toast.success('饭桌创建成功！');
     router.push(`/table/${table.id}`);
   } catch (err: any) {
     console.error('createTable error', err);

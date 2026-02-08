@@ -3,6 +3,9 @@ import {
   IsOptional,
   IsDateString,
   IsNotEmpty,
+  IsNumber,
+  Min,
+  Max,
 } from 'class-validator';
 
 export class CreateTableDto {
@@ -18,10 +21,30 @@ export class CreateTableDto {
   location?: string;
 
   @IsString()
-  @IsNotEmpty()
-  hostSessionId: string;
+  @IsOptional()
+  address?: string;
+
+  @IsString()
+  @IsOptional()
+  addressDetail?: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(-90)
+  @Max(90)
+  latitude?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(-180)
+  @Max(180)
+  longitude?: number;
 
   @IsString()
   @IsNotEmpty()
-  hostName: string;
+  familyId: string; // 所属家庭ID
+
+  @IsString()
+  @IsNotEmpty()
+  hostName: string; // 主人昵称（用于创建 Guest 记录）
 }

@@ -236,16 +236,18 @@ import {
   PlusIcon, SearchIcon, FlameIcon, SnowflakeIcon, CoffeeIcon, 
   SoupIcon, PizzaIcon, LayersIcon, Trash2Icon, CheckIcon, ImageIcon, UploadCloudIcon
 } from 'lucide-vue-next';
-import ChefButton from '../../components/ChefButton.vue';
-import ChefModal from '../../components/ChefModal.vue';
+import ChefButton from '@/components/ChefButton.vue';
+import ChefModal from '@/components/ChefModal.vue';
 import ImportDishesModal from './ImportDishesModal.vue';
-import request from '../../api/request';
-import type { Dish } from '../../types';
-import { Category } from '../../types';
-import { useToast } from '../../composables/useToast';
-import { exportDishes } from '../../utils/excel';
+import request from '@/api/request';
+import type { Dish } from '@/types';
+import { Category } from '@/types';
+import { useToast } from '@/composables/useToast';
+import { useFamilyStore } from '@/stores/useFamilyStore';
+import { exportDishes } from '@/utils/excel';
 
 const toast = useToast();
+const familyStore = useFamilyStore();
 const dishes = ref<Dish[]>([]);
 const searchQuery = ref('');
 const activeCategory = ref<Category | 'ALL'>('ALL');
@@ -296,7 +298,13 @@ const categoryLabels: Record<Category, string> = {
 
 const fetchDishes = async () => {
   try {
-    dishes.value = await request.get('/dishes');
+    if (!familyStore.currentFamily) {
+      toast.warning('请先选择一个家庭');
+      return;
+    }
+    dishes.value = await request.get('/dishes', {
+      params: { familyId: familyStore.currentFamily.id },
+    });
   } catch (err: any) {
     console.error(err);
     toast.error('加载菜单失败，请检查网络或后端服务');
@@ -325,7 +333,7 @@ const batchDelete = async () => {
   if (!confirm(`确定要删除选中的 ${selectedIds.value.length} 道菜品吗？`)) return;
   isLoading.value = true;
   try {
-    await Promise.all(selectedIds.value.map(id => request.delete(`/dishes/${id}`)));
+    await request.post('/dishes/bulk-delete', { ids: selectedIds.value });
     selectedIds.value = [];
     toast.success('批量删除成功');
     fetchDishes();
@@ -366,11 +374,17 @@ const saveDish = async () => {
     console.warn('saveDish validation failed');
     return;
   }
+
+  if (!familyStore.currentFamily) {
+    toast.error('请先选择一个家庭');
+    return;
+  }
   
   isLoading.value = true;
   try {
     const payload = {
       ...dishForm,
+      familyId: familyStore.currentFamily.id,
       tags: tagsInput.value.split(',').map(t => t.trim()).filter(Boolean)
     };
     
@@ -378,16 +392,18 @@ const saveDish = async () => {
     if (editingDishId.value) {
       await request.put(`/dishes/${editingDishId.value}`, payload);
       console.log('update success');
+      toast.success('菜品更新成功');
     } else {
       await request.post('/dishes', payload);
       console.log('create success');
+      toast.success('菜品创建成功');
     }
     
     closeModal();
     fetchDishes();
-  } catch (err) {
+  } catch (err: any) {
     console.error('saveDish error', err);
-    toast.error('保存失败，请重试');
+    toast.error('保存失败：' + (err.response?.data?.message || err.message));
   } finally {
     isLoading.value = false;
   }
@@ -398,6 +414,7 @@ const closeModal = () => {
   editingDishId.value = null;
   dishForm.name = '';
   dishForm.description = '';
+  dishForm.image = '';
   dishForm.tags = [];
   tagsInput.value = '';
 };
