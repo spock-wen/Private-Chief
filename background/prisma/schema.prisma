@@ -60,6 +60,7 @@ model User {
   familyMembers    FamilyMember[]
   createdTables    Table[]        @relation("TableCreator")
   createdDishes    Dish[]         @relation("DishCreator")
+  tableGuests      Guest[]        @relation("GuestUser")
   
   @@index([phone])
   @@index([email])
@@ -195,6 +196,8 @@ model Guest {
   sessionId   String   // 用于 Browser Session 标记匿名身份
   name        String
   preferences String?  // 忌口/偏好
+  userId      String?  // 已登录用户的 ID，用于多设备合并
+  user        User?    @relation("GuestUser", fields: [userId], references: [id], onDelete: SetNull)
   tableId     String
   table       Table    @relation(fields: [tableId], references: [id], onDelete: Cascade)
   votes       Vote[]
@@ -203,6 +206,7 @@ model Guest {
   @@unique([sessionId, tableId])  // 同一会话在同一饭桌只能有一个身份
   @@index([sessionId])
   @@index([tableId])
+  @@index([tableId, userId])  // 按 userId 查找
 }
 
 model Vote {

@@ -141,7 +141,7 @@ const loading = ref(false);
 const sendingCode = ref(false);
 const countdown = ref(0);
 
-const tabs = [
+const tabs: { id: 'phone' | 'email'; label: string }[] = [
   { id: 'phone', label: '手机号登录' },
   { id: 'email', label: '邮箱登录' },
 ];

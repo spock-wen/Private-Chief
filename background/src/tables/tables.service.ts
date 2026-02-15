@@ -49,6 +49,7 @@ export class TablesService {
           create: {
             sessionId: sessionId,
             name: hostName,
+            userId,  // 主人即创建者，用于标识与多设备合并
           },
         },
       },

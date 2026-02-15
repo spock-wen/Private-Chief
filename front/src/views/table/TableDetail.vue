@@ -1,5 +1,5 @@
 <template>
-  <div v-if="table" class="max-w-7xl mx-auto py-12 px-4 space-y-10 animate-fade-in-up">
+  <div v-if="table" :class="['max-w-7xl mx-auto py-12 px-4 space-y-10 animate-fade-in-up', isVisitorMode && !isGuest ? 'pb-24' : '']">
     <!-- Breadcrumbs & Status -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
       <div class="space-y-2">
@@ -57,7 +57,7 @@
       <!-- Host Control Panel -->
       <div v-if="isHost" class="flex items-center gap-3 p-2 bg-white/40 backdrop-blur-md rounded-custom border border-primary/5 shadow-warm">
         <template v-if="table.status === 'PLANNING'">
-          <ChefButton variant="primary" @click="advanceStatus" class="px-8 shadow-warm">
+          <ChefButton variant="primary" @click="confirmAdvanceStatus(TableStatus.VOTING)" class="px-8 shadow-warm">
             开启投票
             <ArrowRightIcon :size="18" />
           </ChefButton>
@@ -73,7 +73,7 @@
           </ChefButton>
         </template>
         <template v-if="table.status === 'LOCKED'">
-          <ChefButton variant="primary" @click="advanceStatus" class="px-8 shadow-warm">
+          <ChefButton variant="primary" @click="confirmAdvanceStatus(TableStatus.ARCHIVED)" class="px-8 shadow-warm">
             结束饭局
             <CheckCircleIcon :size="18" />
           </ChefButton>
@@ -119,7 +119,7 @@
 
             <button 
               v-if="isHost && table.status === 'PLANNING'" 
-              @click="isPickerOpen = true"
+              @click="openPicker"
               class="flex items-center gap-2 text-primary font-bold text-sm hover:underline active:scale-95 transition-all"
             >
               <PlusCircleIcon :size="18" />
@@ -176,7 +176,7 @@
                       <div class="flex justify-between items-center">
                         <!-- Vote Button -->
                         <button 
-                          v-if="table.status === 'VOTING'"
+                          v-if="table.status === 'VOTING' && isGuest"
                           @click="toggleVote(dish.id)"
                           :disabled="votingDishId === dish.id"
                           :class="[
@@ -206,6 +206,15 @@
                             />
                             <span class="relative z-10">{{ hasVoted(dish.id) ? '已想吃' : '我想吃' }}</span>
                           </template>
+                        </button>
+                        <button
+                          v-else-if="table.status === 'VOTING' && !isGuest"
+                          disabled
+                          class="flex items-center gap-2 px-5 py-2 rounded-custom text-xs font-bold bg-primary/10 text-primary/60 cursor-not-allowed"
+                          title="加入后可投票"
+                        >
+                          <HeartIcon :size="14" />
+                          <span>加入后可投票</span>
                         </button>
 
                         <!-- Heat Indicator & Voter Avatars -->
@@ -315,7 +324,10 @@
                 {{ guest.name[0] }}
               </div>
               <div class="flex-1">
-                <p class="text-sm font-bold text-text-dark">{{ guest.name }}</p>
+                <p class="text-sm font-bold text-text-dark flex items-center gap-2">
+                  {{ guest.name }}
+                  <span v-if="guest.userId === table.creatorId" class="text-[9px] font-normal px-1.5 py-0.5 bg-primary/10 text-primary rounded-full">主人</span>
+                </p>
                 <p v-if="guest.preferences" class="text-[10px] text-text-muted/60 italic truncate">{{ guest.preferences }}</p>
               </div>
               <div class="flex gap-1">
@@ -327,18 +339,33 @@
       </div>
     </div>
 
+    <!-- Visitor Mode Bar -->
+    <div
+      v-if="isVisitorMode && !isGuest"
+      class="fixed bottom-0 left-0 right-0 z-50 bg-primary/95 text-white py-3 px-4 flex items-center justify-between shadow-lg"
+    >
+      <span class="text-sm font-bold">访客模式 · 加入后可参与投票</span>
+      <ChefButton
+        @click="isJoinModalOpen = true"
+        class="bg-white text-primary hover:bg-accent border-none"
+      >
+        加入围炉
+      </ChefButton>
+    </div>
+
     <!-- Modals -->
-    <!-- Join Table Modal (仅匿名用户) -->
-    <ChefModal v-model="isJoinModalOpen" title="加入围炉" :close-on-outside-click="false" :show-close="false">
+    <!-- Join Table Modal -->
+    <ChefModal v-model="isJoinModalOpen" title="加入围炉" :close-on-outside-click="true" :show-close="true">
       <div class="space-y-6">
         <div class="bg-primary/5 rounded-xl p-4 flex items-start gap-3">
           <InfoIcon class="text-primary shrink-0 mt-0.5" :size="18" />
           <div class="text-sm text-text-muted">
-            <p class="font-bold text-text-dark mb-1">访客模式</p>
-            <p class="text-xs">您正在以访客身份加入饭桌。如需完整功能，请先<router-link to="/login" class="text-primary underline">登录</router-link>或<router-link to="/register" class="text-primary underline">注册</router-link>。</p>
+            <p class="font-bold text-text-dark mb-1">加入围炉</p>
+            <p v-if="!authStore.isLoggedIn" class="text-xs">您正在以访客身份加入。如需完整功能，请先<router-link to="/login" class="text-primary underline">登录</router-link>或<router-link to="/register" class="text-primary underline">注册</router-link>。</p>
+            <p v-else class="text-xs">加入后可对候选菜品投票，表达您的偏好。</p>
           </div>
         </div>
-        <p class="text-sm text-text-muted">欢迎来到主人的私人宴请，请告知您的称呼与用餐偏好。</p>
+        <p v-if="!authStore.isLoggedIn" class="text-sm text-text-muted">欢迎来到主人的私人宴请，请告知您的称呼与用餐偏好。</p>
         <div class="space-y-4">
           <div class="space-y-1.5">
             <label class="text-[10px] font-bold text-text-dark/60 uppercase tracking-widest">您的昵称</label>
@@ -347,7 +374,9 @@
               type="text" 
               placeholder="怎么称呼您？" 
               class="w-full px-4 py-3 rounded-custom border border-primary/10 focus:border-primary/30 outline-none transition-all"
+              :disabled="!!authStore.user?.nickname"
             />
+            <p v-if="authStore.user?.nickname" class="text-[10px] text-text-muted">已登录，将使用您的昵称</p>
           </div>
           <div class="space-y-1.5">
             <label class="text-[10px] font-bold text-text-dark/60 uppercase tracking-widest">忌口/偏好 (可选)</label>
@@ -361,9 +390,22 @@
         </div>
       </div>
       <template #footer>
-        <ChefButton variant="primary" @click="handleJoinTable" :disabled="!joinForm.name || isLoading" class="w-full shadow-warm">
-          {{ isLoading ? '正在加入...' : '加入围炉' }}
-        </ChefButton>
+        <div class="flex flex-col sm:flex-row gap-2 w-full">
+          <button
+            @click="enterVisitorMode"
+            class="px-6 py-2.5 text-sm font-bold text-text-muted hover:text-text-dark transition-colors order-2 sm:order-1"
+          >
+            先逛逛
+          </button>
+          <ChefButton
+            variant="primary"
+            @click="handleJoinTable"
+            :disabled="(!joinForm.name && !authStore.user?.nickname) || isLoading"
+            class="flex-1 order-1 sm:order-2 shadow-warm"
+          >
+            {{ isLoading ? '正在加入...' : '加入围炉' }}
+          </ChefButton>
+        </div>
       </template>
     </ChefModal>
 
@@ -481,6 +523,17 @@
       </div>
     </ChefModal>
 
+    <!-- Status Change Confirmation Modal -->
+    <ChefModal v-model="isStatusConfirmOpen" :title="statusConfirmTitle" class="max-w-md">
+      <p class="text-sm text-text-muted">{{ statusConfirmMessage }}</p>
+      <template #footer>
+        <button @click="isStatusConfirmOpen = false" class="px-6 py-2.5 text-sm font-bold text-text-dark/40 hover:text-text-dark transition-colors">取消</button>
+        <ChefButton variant="primary" @click="executeStatusChange" :disabled="isLoading" class="shadow-warm">
+          {{ isLoading ? '处理中...' : '确认' }}
+        </ChefButton>
+      </template>
+    </ChefModal>
+
     <!-- Confirm Menu Modal (定稿模式) -->
     <ChefModal v-model="isConfirmingMenu" title="锁定最终菜单" class="max-w-2xl">
       <div class="space-y-6">
@@ -542,7 +595,7 @@
 
 <script setup lang="ts">
 // ... Logic remains largely the same, but imports and reactive refs are updated ...
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   CalendarIcon, MapPinIcon, UtensilsCrossedIcon, PlusCircleIcon,
@@ -582,12 +635,21 @@ const isHost = computed(() => {
   return false;
 });
 
-const isGuest = computed(() => table.value?.guests.some(g => g.sessionId === userStore.sessionId));
+const isGuest = computed(() => {
+  if (!table.value) return false;
+  return table.value.guests.some(g =>
+    g.sessionId === userStore.sessionId ||
+    (authStore.user && g.userId === authStore.user?.id)
+  );
+});
 const isJoinModalOpen = ref(false);
+const isVisitorMode = ref(false);
 const isPickerOpen = ref(false);
 const isBillingModalOpen = ref(false);
 const isConfirmingMenu = ref(false);
 const isVoterMatrixOpen = ref(false);
+const isStatusConfirmOpen = ref(false);
+const pendingStatusTarget = ref<TableStatus | null>(null);
 const isLoading = ref(false);
 const votingDishId = ref<string | null>(null);
 
@@ -621,6 +683,58 @@ const categoryLabels: Record<Category, string> = {
 };
 
 const inviteUrl = computed(() => window.location.href);
+
+const statusConfirmTitle = computed(() => {
+  if (pendingStatusTarget.value === TableStatus.VOTING) return '确认开启投票';
+  if (pendingStatusTarget.value === TableStatus.ARCHIVED) return '确认结束饭局';
+  return '确认操作';
+});
+
+const statusConfirmMessage = computed(() => {
+  if (pendingStatusTarget.value === TableStatus.VOTING) {
+    return '开启投票后，客人将可对候选菜品投票，是否继续？';
+  }
+  if (pendingStatusTarget.value === TableStatus.ARCHIVED) {
+    return '结束饭局后，饭桌将归档，是否继续？';
+  }
+  return '';
+});
+
+const confirmAdvanceStatus = (targetStatus: TableStatus) => {
+  if (targetStatus === TableStatus.LOCKED) {
+    isConfirmingMenu.value = true;
+    return;
+  }
+  pendingStatusTarget.value = targetStatus;
+  isStatusConfirmOpen.value = true;
+};
+
+const executeStatusChange = async () => {
+  if (!table.value || !pendingStatusTarget.value) return;
+  isStatusConfirmOpen.value = false;
+  const target = pendingStatusTarget.value;
+  pendingStatusTarget.value = null;
+
+  if (!authStore.isLoggedIn || !authStore.user) {
+    toast.error('请先登录后再操作');
+    return;
+  }
+  if (table.value.creatorId !== authStore.user.id) {
+    toast.error('只有饭桌创建者可以修改状态');
+    return;
+  }
+
+  isLoading.value = true;
+  try {
+    await request.patch(`/tables/${table.value.id}/status`, { status: target });
+    toast.success('状态已更新');
+    await fetchTable();
+  } catch (err: any) {
+    toast.error('操作失败：' + (err.response?.data?.message || err.message));
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const activeTab = ref<Category | 'ALL'>('ALL');
 
@@ -695,15 +809,12 @@ const fetchTable = async () => {
       ? data.creatorId === authStore.user.id 
       : false;
     
-    // 如果是首次加载且用户未加入
+    // 如果是首次加载且用户未加入，弹出加入弹窗（支持先逛逛）
     if (isFirstLoad && !currentIsHost && !currentIsGuest && data.status !== TableStatus.ARCHIVED && !hasJoinedBefore.value) {
-      // 如果用户已登录，自动以真实身份加入
       if (authStore.isLoggedIn && authStore.user) {
-        await autoJoinAsAuthenticatedUser();
-      } else {
-        // 如果是匿名用户，弹出输入昵称的弹窗
-        isJoinModalOpen.value = true;
+        joinForm.value.name = authStore.user.nickname;
       }
+      isJoinModalOpen.value = true;
     }
   } catch (err: any) {
     console.error('获取饭桌详情失败:', err);
@@ -714,38 +825,31 @@ const fetchTable = async () => {
   }
 };
 
-// 已登录用户自动加入
-const autoJoinAsAuthenticatedUser = async () => {
-  if (!authStore.user) return;
-  
-  try {
-    await request.post(`/tables/${route.params.id}/guests`, {
-      sessionId: userStore.sessionId,
-      name: authStore.user.nickname,
-      preferences: ''
-    });
-    hasJoinedBefore.value = true;
-    await fetchTable();
-    toast.success(`欢迎 ${authStore.user.nickname}！`);
-  } catch (err: any) {
-    console.error('自动加入失败:', err);
-    // 如果自动加入失败，降级为手动输入
-    isJoinModalOpen.value = true;
-  }
+const enterVisitorMode = () => {
+  isJoinModalOpen.value = false;
+  isVisitorMode.value = true;
 };
 
+watch(isJoinModalOpen, (val, oldVal) => {
+  if (oldVal && !val && !hasJoinedBefore.value && !isGuest.value) {
+    isVisitorMode.value = true;
+  }
+});
+
 const handleJoinTable = async () => {
-  if (!joinForm.value.name) return;
+  const nameToUse = joinForm.value.name?.trim() || authStore.user?.nickname;
+  if (!nameToUse) return;
   isLoading.value = true;
   try {
     await request.post(`/tables/${route.params.id}/guests`, {
       sessionId: userStore.sessionId,
-      name: joinForm.value.name,
+      name: nameToUse,
       preferences: joinForm.value.preferences
     });
-    userStore.setGuestName(joinForm.value.name);
+    userStore.setGuestName(nameToUse);
     hasJoinedBefore.value = true;
     isJoinModalOpen.value = false;
+    isVisitorMode.value = false;
     await fetchTable();
   } catch (err) {
     console.error(err);
@@ -755,13 +859,22 @@ const handleJoinTable = async () => {
   }
 };
 
-const fetchAllDishes = async () => {
+const fetchAllDishes = async (familyId: string) => {
   try {
-    allDishes.value = await request.get('/dishes');
+    allDishes.value = await request.get('/dishes', {
+      params: { familyId },
+    });
   } catch (err) {
     console.error(err);
     toast.error('加载菜品列表失败');
   }
+};
+
+const openPicker = async () => {
+  if (table.value?.familyId) {
+    await fetchAllDishes(table.value.familyId);
+  }
+  isPickerOpen.value = true;
 };
 
 const filteredAllDishes = computed(() => {
@@ -887,49 +1000,6 @@ const saveBilling = async () => {
   }
 };
 
-const advanceStatus = async () => {
-  if (!table.value || isLoading.value) return;
-
-  // 检查权限：必须是已登录用户且是创建者
-  if (!authStore.isLoggedIn || !authStore.user) {
-    toast.error('请先登录后再操作');
-    return;
-  }
-  
-  if (table.value.creatorId !== authStore.user.id) {
-    toast.error('只有饭桌创建者可以修改状态');
-    return;
-  }
-
-  // 如果是投票中，点击进入定稿确认模式
-  if (table.value.status === TableStatus.VOTING && !isConfirmingMenu.value) {
-    isConfirmingMenu.value = true;
-    return;
-  }
-
-  const nextStatusMap: Record<TableStatus, TableStatus> = {
-    [TableStatus.PLANNING]: TableStatus.VOTING,
-    [TableStatus.VOTING]: TableStatus.LOCKED,
-    [TableStatus.LOCKED]: TableStatus.ARCHIVED,
-    [TableStatus.ARCHIVED]: TableStatus.ARCHIVED,
-  };
-  
-  isLoading.value = true;
-  try {
-    await request.patch(`/tables/${table.value.id}/status`, { 
-      status: nextStatusMap[table.value.status]
-    });
-    isConfirmingMenu.value = false;
-    toast.success('状态已更新');
-    await fetchTable();
-  } catch (err: any) {
-    console.error('状态更新失败:', err);
-    toast.error('操作失败：' + (err.response?.data?.message || err.message));
-  } finally {
-    isLoading.value = false;
-  }
-};
-
 const toggleVote = async (dishId: string) => {
   if (!table.value || votingDishId.value) return;
   
@@ -981,11 +1051,17 @@ const copyLink = () => {
   toast.success('邀约链接已复制，去发送给好友吧！');
 };
 
+const getWebSocketUrl = () => {
+  const envUrl = import.meta.env.VITE_WS_URL;
+  if (envUrl) return envUrl;
+  // 开发环境默认使用后端端口，生产环境使用当前域名（需反向代理转发）
+  return import.meta.env.DEV ? 'http://localhost:8070' : window.location.origin;
+};
+
 const initWebSocket = () => {
   const tableId = route.params.id as string;
 
-  // 连接到后端 WebSocket 服务器
-  socket = io('http://localhost:8070', {
+  socket = io(getWebSocketUrl(), {
     transports: ['websocket', 'polling'],
   });
 
@@ -1007,7 +1083,6 @@ const initWebSocket = () => {
 
 onMounted(() => {
   fetchTable();
-  fetchAllDishes();
   initWebSocket();
 });
 

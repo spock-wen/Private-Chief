@@ -117,13 +117,11 @@ import ChefModal from '../../components/ChefModal.vue';
 import request from '../../api/request';
 import type { Table } from '../../types';
 import { TableStatus } from '../../types';
-import { useUserStore } from '../../stores/useUserStore';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { useFamilyStore } from '../../stores/useFamilyStore';
 import { useToast } from '../../composables/useToast';
 
 const router = useRouter();
-const userStore = useUserStore();
 const authStore = useAuthStore();
 const familyStore = useFamilyStore();
 const toast = useToast();
@@ -132,7 +130,7 @@ const isCreateModalOpen = ref(false);
 const isLoading = ref(false);
 
 const currentFamily = computed(() => familyStore.currentFamily);
-
+// 发起聚餐需要家庭上下文
 const newTable = reactive({
   name: '',
   time: '',
@@ -149,12 +147,13 @@ const statusConfig: Record<TableStatus, { label: string; class: string }> = {
 
 const fetchTables = async () => {
   try {
-    if (!currentFamily.value) {
-      toast.warning('请先选择一个家庭');
+    if (!authStore.user) {
+      toast.warning('请先登录');
       return;
     }
+    // 我的饭桌：仅展示当前用户创建的饭桌
     tables.value = await request.get('/tables', { 
-      params: { familyId: currentFamily.value.id } 
+      params: { userId: authStore.user.id } 
     });
   } catch (err) {
     console.error(err);

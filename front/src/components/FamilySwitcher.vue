@@ -103,11 +103,11 @@ const openJoinModal = () => {
   showJoinModal.value = true;
 };
 
-const onFamilyCreated = (family: any) => {
+const onFamilyCreated = () => {
   isOpen.value = false;
 };
 
-const onFamilyJoined = (family: any) => {
+const onFamilyJoined = () => {
   isOpen.value = false;
 };
 

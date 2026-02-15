@@ -3,9 +3,10 @@ import { GuestsService } from './guests.service';
 import { GuestsController } from './guests.controller';
 import { PrismaService } from '../prisma.service';
 import { SessionsModule } from '../sessions/sessions.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [SessionsModule],
+  imports: [SessionsModule, AuthModule],
   controllers: [GuestsController],
   providers: [GuestsService, PrismaService],
 })

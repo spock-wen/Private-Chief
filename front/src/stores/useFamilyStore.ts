@@ -84,8 +84,9 @@ export const useFamilyStore = defineStore('family', () => {
       families.value = data;
 
       // 如果有家庭但没有选中当前家庭，自动选中第一个
-      if (data.length > 0 && !currentFamily.value) {
-        setCurrentFamily(data[0]);
+      const first = data[0];
+      if (first && !currentFamily.value) {
+        setCurrentFamily(first);
       }
 
       initFromStorage();
@@ -173,8 +174,9 @@ export const useFamilyStore = defineStore('family', () => {
 
       // 如果删除的是当前家庭，切换到第一个家庭
       if (currentFamily.value?.id === id) {
-        if (families.value.length > 0) {
-          setCurrentFamily(families.value[0]);
+        const first = families.value[0];
+        if (first) {
+          setCurrentFamily(first);
         } else {
           currentFamily.value = null;
           localStorage.removeItem('currentFamilyId');

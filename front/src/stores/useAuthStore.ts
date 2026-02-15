@@ -107,6 +107,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  // 更新个人信息
+  const updateProfile = async (data: { nickname?: string; avatar?: string }) => {
+    const userData: User = await request.patch('/auth/me', data);
+    user.value = userData;
+    localStorage.setItem('user', JSON.stringify(userData));
+    return userData;
+  };
+
   // 设置认证信息
   const setAuth = (tokens: AuthTokens) => {
     user.value = tokens.user;
@@ -146,6 +154,7 @@ export const useAuthStore = defineStore('auth', () => {
     sendCode,
     refresh,
     fetchUser,
+    updateProfile,
     logout,
   };
 });

@@ -14,20 +14,38 @@ export class VotesService {
     private votesGateway: VotesGateway,
   ) {}
 
-  async vote(tableId: string, sessionId: string, dishId: string) {
+  private async findGuestForVote(
+    tableId: string,
+    sessionId: string,
+    userId?: string,
+  ) {
+    if (userId) {
+      const byUserId = await this.prisma.guest.findFirst({
+        where: { tableId, userId },
+      });
+      if (byUserId) return byUserId;
+    }
+    return this.prisma.guest.findFirst({
+      where: { tableId, sessionId },
+    });
+  }
+
+  async vote(
+    tableId: string,
+    sessionId: string,
+    dishId: string,
+    userId?: string,
+  ) {
     const table = await this.prisma.table.findUnique({
       where: { id: tableId },
     });
     if (!table) throw new NotFoundException('Table not found');
 
-    // 锁定投票权限校验
     if (table.status !== TableStatus.VOTING) {
       throw new ForbiddenException('Voting is not open for this table');
     }
 
-    const guest = await this.prisma.guest.findFirst({
-      where: { tableId, sessionId },
-    });
+    const guest = await this.findGuestForVote(tableId, sessionId, userId);
     if (!guest) throw new ForbiddenException('You must join the table first');
 
     const vote = await this.prisma.vote.upsert({
@@ -57,7 +75,12 @@ export class VotesService {
     return vote;
   }
 
-  async unvote(tableId: string, sessionId: string, dishId: string) {
+  async unvote(
+    tableId: string,
+    sessionId: string,
+    dishId: string,
+    userId?: string,
+  ) {
     const table = await this.prisma.table.findUnique({
       where: { id: tableId },
     });
@@ -67,9 +90,7 @@ export class VotesService {
       throw new ForbiddenException('Voting is locked');
     }
 
-    const guest = await this.prisma.guest.findFirst({
-      where: { tableId, sessionId },
-    });
+    const guest = await this.findGuestForVote(tableId, sessionId, userId);
     if (!guest) throw new ForbiddenException('Guest not found');
 
     const result = await this.prisma.vote.delete({

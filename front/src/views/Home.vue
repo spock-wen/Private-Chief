@@ -14,7 +14,12 @@
           <UsersIcon :size="16" />
           邀请管理员
         </button>
-        <span class="text-sm text-text-muted">{{ user?.nickname }}</span>
+        <router-link
+          to="/profile"
+          class="text-sm text-text-muted hover:text-primary transition-colors"
+        >
+          {{ user?.nickname }}
+        </router-link>
         <button
           @click="handleLogout"
           class="text-sm text-text-muted hover:text-primary transition-colors"

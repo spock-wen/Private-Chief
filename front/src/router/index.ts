@@ -45,13 +45,18 @@ const router = createRouter({
       path: '/table/:id',
       name: 'TableDetail',
       component: () => import('../views/table/TableDetail.vue'),
-      // 客人可访问，不需要登录
+    },
+    {
+      path: '/profile',
+      name: 'Profile',
+      component: () => import('../views/profile/Profile.vue'),
+      meta: { requiresAuth: true },
     },
   ],
 });
 
 // 路由守卫
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore();
   const familyStore = useFamilyStore();
 

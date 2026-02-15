@@ -34,6 +34,7 @@ export interface Guest {
   sessionId: string;
   name: string;
   preferences?: string;
+  userId?: string;  // 已登录用户 ID，用于主人标识与多设备合并
   tableId: string;
   votes: Vote[];
 }

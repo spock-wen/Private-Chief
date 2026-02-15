@@ -5,7 +5,8 @@ export class JoinTableDto {
   sessionId: string;
 
   @IsString()
-  name: string;
+  @IsOptional()
+  name?: string;  // 已登录用户可选，后端用 user.nickname
 
   @IsString()
   @IsOptional()

@@ -90,8 +90,10 @@ import { useFamilyStore } from '@/stores/useFamilyStore';
 import { useAuthStore } from '@/stores/useAuthStore';
 import CreateFamilyModal from '@/components/CreateFamilyModal.vue';
 import JoinFamilyModal from '@/components/JoinFamilyModal.vue';
+import { useToast } from '@/composables/useToast';
 
 const router = useRouter();
+const toast = useToast();
 const familyStore = useFamilyStore();
 const authStore = useAuthStore();
 
@@ -112,7 +114,7 @@ onMounted(async () => {
   }
 });
 
-const onFamilyCreated = (family: any) => {
+const onFamilyCreated = () => {
   // 创建成功后，跳转到首页
   router.push('/');
 };
@@ -122,8 +124,7 @@ const onFamilyJoined = () => {
 };
 
 const skipOnboarding = () => {
-  console.log('Skipping onboarding...');
-  router.push('/');
+  toast.warning('请先创建或加入家庭以继续使用');
 };
 
 const handleLogout = () => {

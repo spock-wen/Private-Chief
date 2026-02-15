@@ -160,10 +160,10 @@ export class FamiliesService {
 
   /**
    * 更新家庭信息
+   * 主人和管理员均可修改
    */
   async update(id: string, updateFamilyDto: UpdateFamilyDto, userId: string) {
-    // 检查是否是主人
-    await this.checkOwnerPermission(id, userId);
+    await this.checkAdminPermission(id, userId);
 
     const family = await this.prisma.family.update({
       where: { id },

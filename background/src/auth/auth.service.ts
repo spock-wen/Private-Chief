@@ -10,6 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { PhoneLoginDto } from './dto/phone-login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class AuthService {
@@ -24,18 +25,22 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const { email, phone, password } = loginDto;
 
-    if (!email && !phone) {
+    const emailStr = typeof email === 'string' ? email.trim() : '';
+    const phoneStr = typeof phone === 'string' ? phone.trim() : '';
+
+    if (!emailStr && !phoneStr) {
       throw new BadRequestException('请提供邮箱或手机号');
     }
 
-    // 查找用户
+    const conditions: { email?: string; phone?: string }[] = [];
+    if (emailStr) conditions.push({ email: emailStr });
+    if (phoneStr) conditions.push({ phone: phoneStr });
+    if (conditions.length === 0) {
+      throw new BadRequestException('请提供有效的邮箱或手机号');
+    }
+
     const user = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          email ? { email } : {},
-          phone ? { phone } : {},
-        ].filter((condition) => Object.keys(condition).length > 0),
-      },
+      where: { OR: conditions },
     });
 
     if (!user) {
@@ -46,8 +51,12 @@ export class AuthService {
       throw new UnauthorizedException('该账号未设置密码，请使用其他登录方式');
     }
 
-    // 验证密码
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    let isPasswordValid = false;
+    try {
+      isPasswordValid = await bcrypt.compare(password, user.password);
+    } catch {
+      throw new UnauthorizedException('密码验证失败，请重试');
+    }
     if (!isPasswordValid) {
       throw new UnauthorizedException('密码错误');
     }
@@ -188,6 +197,36 @@ export class AuthService {
         wechatOpenId: user.wechatOpenId,
       },
     };
+  }
+
+  /**
+   * 更新个人信息
+   */
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('用户不存在');
+    }
+
+    const data: { nickname?: string; avatar?: string } = {};
+    if (dto.nickname !== undefined) data.nickname = dto.nickname;
+    if (dto.avatar !== undefined) data.avatar = dto.avatar;
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data,
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        nickname: true,
+        avatar: true,
+        wechatOpenId: true,
+      },
+    });
   }
 
   /**
