@@ -69,6 +69,15 @@ export class AuthController {
   }
 
   /**
+   * 发送邮箱验证码
+   */
+  @Public()
+  @Post('send-email-code')
+  async sendEmailCode(@Body('email') email: string) {
+    return this.authService.sendEmailCode(email);
+  }
+
+  /**
    * 刷新 Token
    */
   @UseGuards(JwtAuthGuard)

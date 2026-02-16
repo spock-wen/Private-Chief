@@ -48,6 +48,15 @@
 
         <!-- 操作按钮 -->
         <div class="p-2 space-y-1">
+          <router-link
+            v-if="currentFamily"
+            to="/family/settings"
+            class="w-full px-4 py-2 text-left text-sm font-bold text-primary hover:bg-accent/10 rounded-custom transition-colors flex items-center gap-2"
+            @click="isOpen = false"
+          >
+            <SettingsIcon :size="16" />
+            家庭管理
+          </router-link>
           <button
             @click="openCreateModal"
             class="w-full px-4 py-2 text-left text-sm font-bold text-primary hover:bg-accent/10 rounded-custom transition-colors flex items-center gap-2"
@@ -74,7 +83,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { HomeIcon, ChevronDownIcon, CheckIcon, PlusIcon, LinkIcon } from 'lucide-vue-next';
+import { HomeIcon, ChevronDownIcon, CheckIcon, PlusIcon, LinkIcon, SettingsIcon } from 'lucide-vue-next';
 import { useFamilyStore } from '@/stores/useFamilyStore';
 import CreateFamilyModal from './CreateFamilyModal.vue';
 import JoinFamilyModal from './JoinFamilyModal.vue';

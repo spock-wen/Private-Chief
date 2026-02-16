@@ -20,5 +20,10 @@ export class RegisterDto {
   @IsString()
   @IsOptional()
   avatar?: string;
+
+  /** 邮箱验证码（邮箱注册时必填） */
+  @IsString()
+  @IsOptional()
+  emailCode?: string;
 }
 

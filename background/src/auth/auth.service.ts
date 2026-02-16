@@ -11,12 +11,18 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { PhoneLoginDto } from './dto/phone-login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { VerificationCodeService } from '../verification/verification-code.service';
+import { SmsService } from '../verification/sms.service';
+import { EmailService } from '../verification/email.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private verificationCode: VerificationCodeService,
+    private sms: SmsService,
+    private email: EmailService,
   ) {}
 
   /**
@@ -70,10 +76,10 @@ export class AuthService {
   async phoneLogin(phoneLoginDto: PhoneLoginDto) {
     const { phone, code } = phoneLoginDto;
 
-    // TODO: 验证验证码（这里暂时跳过，实际需要对接短信服务）
-    // 临时：验证码为 123456
-    if (code !== '123456') {
-      throw new UnauthorizedException('验证码错误');
+    if (
+      !this.verificationCode.verifyAndConsume(phone, 'phone', code)
+    ) {
+      throw new UnauthorizedException('验证码错误或已过期');
     }
 
     // 查找或创建用户
@@ -98,10 +104,23 @@ export class AuthService {
    * 邮箱注册
    */
   async register(registerDto: RegisterDto) {
-    const { email, phone, password, nickname, avatar } = registerDto;
+    const { email, phone, password, nickname, avatar, emailCode } =
+      registerDto;
 
     if (!email && !phone) {
       throw new BadRequestException('请提供邮箱或手机号');
+    }
+
+    // 邮箱注册需校验验证码
+    if (email) {
+      if (!emailCode) {
+        throw new BadRequestException('请提供邮箱验证码');
+      }
+      if (
+        !this.verificationCode.verifyAndConsume(email, 'email', emailCode)
+      ) {
+        throw new UnauthorizedException('邮箱验证码错误或已过期');
+      }
     }
 
     // 检查是否已存在
@@ -233,19 +252,57 @@ export class AuthService {
    * 发送验证码（手机号）
    */
   async sendPhoneCode(phone: string) {
-    // TODO: 对接短信服务（如阿里云短信、腾讯云短信等）
-    // 这里暂时只是模拟，固定验证码为 123456
-    
-    const code = '123456';
-    console.log(`[开发环境] 发送验证码到 ${phone}: ${code}`);
-    console.log(`[提示] 这是模拟的验证码服务，实际生产环境需要对接真实的短信服务`);
-    
+    if (!phone || !/^1\d{10}$/.test(phone)) {
+      throw new BadRequestException('请输入正确的手机号');
+    }
+    if (!this.verificationCode.canSend(phone, 'phone')) {
+      const remaining = this.verificationCode.getRemainingCooldownSeconds(
+        phone,
+        'phone',
+      );
+      throw new BadRequestException(
+        `请 ${remaining} 秒后再试`,
+      );
+    }
+
+    const code = this.verificationCode.generateCode();
+    this.verificationCode.set(phone, 'phone', code);
+    this.verificationCode.recordSend(phone, 'phone');
+    await this.sms.sendCode(phone, code);
+
+    const isDev = process.env.ENABLE_REAL_SMS !== 'true';
     return {
-      message: '验证码已发送（开发环境模拟）',
-      // 开发环境返回验证码供测试使用
-      code: code,
-      // 添加提示信息
-      tip: '这是开发环境，验证码固定为 123456',
+      message: '验证码已发送',
+      ...(isDev && { code, tip: '开发环境：验证码见控制台' }),
+    };
+  }
+
+  /**
+   * 发送验证码（邮箱）
+   */
+  async sendEmailCode(email: string) {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new BadRequestException('请输入正确的邮箱');
+    }
+    if (!this.verificationCode.canSend(email, 'email')) {
+      const remaining = this.verificationCode.getRemainingCooldownSeconds(
+        email,
+        'email',
+      );
+      throw new BadRequestException(
+        `请 ${remaining} 秒后再试`,
+      );
+    }
+
+    const code = this.verificationCode.generateCode();
+    this.verificationCode.set(email, 'email', code);
+    this.verificationCode.recordSend(email, 'email');
+    await this.email.sendCode(email, code);
+
+    const isDev = process.env.ENABLE_REAL_EMAIL !== 'true';
+    return {
+      message: '验证码已发送',
+      ...(isDev && { code, tip: '开发环境：验证码见控制台' }),
     };
   }
 }

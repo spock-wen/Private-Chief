@@ -15,16 +15,30 @@
       <h1 class="serif-title text-2xl font-bold text-text-dark">个人信息</h1>
 
       <form @submit.prevent="handleSave" class="space-y-6">
-        <div class="flex justify-center">
-          <div class="w-24 h-24 rounded-full bg-accent/30 flex items-center justify-center text-primary font-bold text-2xl border-2 border-white shadow-sm overflow-hidden">
-            <img
-              v-if="form.avatar"
-              :src="form.avatar"
-              alt="头像"
-              class="w-full h-full object-cover"
-            />
-            <span v-else>{{ (form.nickname || '?')[0] }}</span>
+        <div class="space-y-2">
+          <label class="text-sm font-bold text-text-dark">头像（可选）</label>
+          <div
+            class="flex justify-center"
+            @click="avatarInputRef?.click()"
+          >
+            <div class="w-24 h-24 rounded-full bg-accent/30 flex items-center justify-center text-primary font-bold text-2xl border-2 border-dashed border-primary/20 hover:border-primary/40 cursor-pointer overflow-hidden transition-colors">
+              <img
+                v-if="form.avatar"
+                :src="form.avatar"
+                alt="头像"
+                class="w-full h-full object-cover"
+              />
+              <span v-else class="text-sm">点击上传</span>
+            </div>
           </div>
+          <input
+            ref="avatarInputRef"
+            type="file"
+            accept="image/*"
+            class="hidden"
+            @change="handleAvatarChange"
+          />
+          <p class="text-xs text-text-muted text-center">从设备选择图片，支持 JPG、PNG、WebP，不超过 5MB</p>
         </div>
 
         <div class="space-y-2">
@@ -35,16 +49,6 @@
             placeholder="请输入昵称"
             class="w-full px-4 py-3 rounded-custom border border-primary/10 focus:border-primary/30 outline-none transition-all"
             required
-          />
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-sm font-bold text-text-dark">头像 URL（可选）</label>
-          <input
-            v-model="form.avatar"
-            type="url"
-            placeholder="https://..."
-            class="w-full px-4 py-3 rounded-custom border border-primary/10 focus:border-primary/30 outline-none transition-all"
           />
         </div>
 
@@ -65,11 +69,28 @@ import { useToast } from '@/composables/useToast';
 const authStore = useAuthStore();
 const toast = useToast();
 const loading = ref(false);
+const avatarInputRef = ref<HTMLInputElement>();
 
 const form = reactive({
   nickname: '',
   avatar: '',
 });
+
+const handleAvatarChange = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    toast.warning('图片大小不能超过 5MB');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    if (ev.target?.result) form.avatar = ev.target.result as string;
+  };
+  reader.readAsDataURL(file);
+  target.value = '';
+};
 
 onMounted(() => {
   if (authStore.user) {
@@ -88,7 +109,7 @@ const handleSave = async () => {
   try {
     await authStore.updateProfile({
       nickname: form.nickname.trim(),
-      avatar: form.avatar.trim() || undefined,
+      avatar: form.avatar || undefined,
     });
     toast.success('保存成功');
   } catch (err: any) {

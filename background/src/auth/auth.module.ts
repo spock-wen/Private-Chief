@@ -6,10 +6,12 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { OptionalJwtAuthGuard } from './guards/optional-jwt-auth.guard';
 import { PrismaService } from '../prisma.service';
+import { VerificationModule } from '../verification/verification.module';
 
 @Module({
   imports: [
     PassportModule,
+    VerificationModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
       signOptions: { expiresIn: '15m' },

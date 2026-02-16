@@ -52,6 +52,12 @@ const router = createRouter({
       component: () => import('../views/profile/Profile.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/family/settings',
+      name: 'FamilySettings',
+      component: () => import('../views/family/FamilySettings.vue'),
+      meta: { requiresAuth: true, requiresFamily: true },
+    },
   ],
 });
 

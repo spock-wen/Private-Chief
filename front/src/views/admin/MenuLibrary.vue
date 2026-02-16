@@ -151,15 +151,7 @@
               class="hidden" 
               @change="handleFileChange"
             />
-          </div>
-          <div class="space-y-1.5">
-            <input 
-              v-model="dishForm.image" 
-              type="text" 
-              placeholder="输入图片 URL 或点击上方上传..." 
-              class="w-full px-4 py-3 rounded-xl border border-primary/10 focus:border-primary/30 outline-none transition-all text-sm"
-            />
-            <p class="text-[10px] text-text-muted/60 pl-1">支持本地上传，或输入 JPG, PNG, WebP 等链接</p>
+            <p class="text-[10px] text-text-muted/60 pl-1">从设备选择图片，支持 JPG、PNG、WebP，不超过 5MB，以 base64 保存</p>
           </div>
         </div>
 
