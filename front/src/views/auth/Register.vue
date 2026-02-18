@@ -12,35 +12,30 @@
       <!-- 注册卡片 -->
       <div class="chef-card p-8 animate-fade-in-up" style="animation-delay: 0.1s">
         <h2 class="text-2xl font-bold text-center mb-6">注册</h2>
-        
-        <form @submit.prevent="handleRegister" class="space-y-4">
-          <div class="space-y-2">
-            <label class="text-sm font-bold text-text-dark">昵称</label>
-            <input
-              v-model="form.nickname"
-              type="text"
-              placeholder="请输入昵称"
-              class="w-full px-4 py-3 rounded-custom border border-primary/10 focus:border-primary/30 outline-none transition-all"
-              required
-            />
-          </div>
 
+        <form @submit.prevent="handleRegister" class="space-y-4">
+          <!-- 1. 邮箱 -->
           <div class="space-y-2">
-            <label class="text-sm font-bold text-text-dark">邮箱</label>
+            <label for="register-email" class="text-sm font-bold text-text-dark">邮箱</label>
             <input
+              id="register-email"
               v-model="form.email"
               type="email"
               placeholder="请输入邮箱"
               class="w-full px-4 py-3 rounded-custom border border-primary/10 focus:border-primary/30 outline-none transition-all"
+              :class="{ 'border-red-500': fieldErrors.email }"
               required
+              @input="fieldErrors.email = ''"
             />
+            <p v-if="fieldErrors.email" class="text-xs text-red-600" role="alert">{{ fieldErrors.email }}</p>
           </div>
 
-          <!-- 邮箱验证码 -->
+          <!-- 2. 邮箱验证码 -->
           <div class="space-y-2">
-            <label class="text-sm font-bold text-text-dark">邮箱验证码</label>
+            <label for="register-code" class="text-sm font-bold text-text-dark">邮箱验证码</label>
             <div class="flex gap-2">
               <input
+                id="register-code"
                 v-model="form.emailCode"
                 type="text"
                 placeholder="请输入6位验证码"
@@ -48,38 +43,56 @@
                 pattern="[0-9]*"
                 inputmode="numeric"
                 class="flex-1 px-4 py-3 rounded-custom border border-primary/10 focus:border-primary/30 outline-none transition-all"
+                :class="{ 'border-red-500': fieldErrors.emailCode }"
                 required
+                @input="fieldErrors.emailCode = ''"
               />
               <button
                 type="button"
                 @click="sendEmailCode"
                 :disabled="countdown > 0 || sendingCode || !form.email"
-                class="px-4 py-3 rounded-custom border border-primary/20 text-primary font-bold text-sm hover:bg-primary/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                class="px-4 py-3 rounded-custom border border-primary/20 text-primary font-bold text-sm hover:bg-primary/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap cursor-pointer"
               >
                 {{ countdown > 0 ? `${countdown}s` : sendingCode ? '发送中...' : '获取验证码' }}
               </button>
             </div>
             <p v-if="!form.emailCode" class="text-xs text-text-muted">
-              验证码将发送到您的邮箱，请注意查收
+              验证码将发送到您的邮箱，5 分钟内有效
             </p>
-            <p v-else-if="emailVerified" class="text-xs text-green-600">
-              ✓ 验证码格式正确（6位数字）
+            <p v-else-if="emailCodeFilled" class="text-xs text-green-600">
+              ✓ 验证码已填写
             </p>
             <p v-else class="text-xs text-red-600">
               ✗ 验证码应为6位数字
             </p>
+            <p v-if="fieldErrors.emailCode" class="text-xs text-red-600" role="alert">{{ fieldErrors.emailCode }}</p>
           </div>
 
+          <!-- 3. 密码 -->
           <div class="space-y-2">
-            <label class="text-sm font-bold text-text-dark">密码</label>
-            <input
-              v-model="form.password"
-              type="password"
-              placeholder="至少6位字符，建议包含字母和数字"
-              class="w-full px-4 py-3 rounded-custom border border-primary/10 focus:border-primary/30 outline-none transition-all"
-              required
-              minlength="6"
-            />
+            <label for="register-password" class="text-sm font-bold text-text-dark">密码</label>
+            <div class="relative">
+              <input
+                id="register-password"
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="至少6位字符，建议包含字母和数字"
+                class="w-full px-4 py-3 pr-12 rounded-custom border border-primary/10 focus:border-primary/30 outline-none transition-all"
+                :class="{ 'border-red-500': fieldErrors.password }"
+                required
+                minlength="6"
+                @input="fieldErrors.password = ''"
+              />
+              <button
+                type="button"
+                class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-text-muted hover:text-text-dark transition-colors cursor-pointer"
+                :aria-label="showPassword ? '隐藏密码' : '显示密码'"
+                @click="showPassword = !showPassword"
+              >
+                <EyeIcon v-if="!showPassword" :size="18" />
+                <EyeOffIcon v-else :size="18" />
+              </button>
+            </div>
             <div class="text-xs text-text-muted space-y-1">
               <p :class="form.password.length >= 6 ? 'text-green-600' : ''">
                 {{ form.password.length >= 6 ? '✓' : '○' }} 至少6位字符
@@ -88,55 +101,101 @@
                 {{ /[a-zA-Z]/.test(form.password) && /[0-9]/.test(form.password) ? '✓' : '○' }} 包含字母和数字（推荐）
               </p>
             </div>
+            <p v-if="fieldErrors.password" class="text-xs text-red-600" role="alert">{{ fieldErrors.password }}</p>
           </div>
 
+          <!-- 4. 确认密码 -->
           <div class="space-y-2">
-            <label class="text-sm font-bold text-text-dark">确认密码</label>
-            <input
-              v-model="confirmPassword"
-              type="password"
-              placeholder="请再次输入密码"
-              class="w-full px-4 py-3 rounded-custom border border-primary/10 focus:border-primary/30 outline-none transition-all"
-              required
-            />
+            <label for="register-confirm" class="text-sm font-bold text-text-dark">确认密码</label>
+            <div class="relative">
+              <input
+                id="register-confirm"
+                v-model="confirmPassword"
+                :type="showConfirmPassword ? 'text' : 'password'"
+                placeholder="请再次输入密码"
+                class="w-full px-4 py-3 pr-12 rounded-custom border border-primary/10 focus:border-primary/30 outline-none transition-all"
+                :class="{ 'border-red-500': fieldErrors.confirmPassword }"
+                required
+                @input="fieldErrors.confirmPassword = ''"
+              />
+              <button
+                type="button"
+                class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-text-muted hover:text-text-dark transition-colors cursor-pointer"
+                :aria-label="showConfirmPassword ? '隐藏密码' : '显示密码'"
+                @click="showConfirmPassword = !showConfirmPassword"
+              >
+                <EyeIcon v-if="!showConfirmPassword" :size="18" />
+                <EyeOffIcon v-else :size="18" />
+              </button>
+            </div>
             <p v-if="confirmPassword && form.password !== confirmPassword" class="text-xs text-red-600">
               ✗ 两次输入的密码不一致
             </p>
             <p v-else-if="confirmPassword && form.password === confirmPassword" class="text-xs text-green-600">
               ✓ 密码一致
             </p>
+            <p v-if="fieldErrors.confirmPassword" class="text-xs text-red-600" role="alert">{{ fieldErrors.confirmPassword }}</p>
           </div>
+
+          <!-- 5. 昵称 -->
+          <div class="space-y-2">
+            <label for="register-nickname" class="text-sm font-bold text-text-dark">昵称</label>
+            <input
+              id="register-nickname"
+              v-model="form.nickname"
+              type="text"
+              placeholder="请输入昵称"
+              class="w-full px-4 py-3 rounded-custom border border-primary/10 focus:border-primary/30 outline-none transition-all"
+              :class="{ 'border-red-500': fieldErrors.nickname }"
+              required
+              @input="fieldErrors.nickname = ''"
+            />
+            <p v-if="fieldErrors.nickname" class="text-xs text-red-600" role="alert">{{ fieldErrors.nickname }}</p>
+          </div>
+
+          <!-- 服务条款 -->
+          <div class="flex items-start gap-2">
+            <input
+              id="register-terms"
+              v-model="agreedToTerms"
+              type="checkbox"
+              class="mt-1 rounded border-primary/30 text-primary focus:ring-primary cursor-pointer"
+            />
+            <label for="register-terms" class="text-xs text-text-muted cursor-pointer">
+              我已阅读并同意
+              <a href="#" class="text-primary hover:underline">服务条款</a>
+              和
+              <a href="#" class="text-primary hover:underline">隐私政策</a>
+            </label>
+          </div>
+          <p v-if="fieldErrors.terms" class="text-xs text-red-600" role="alert">{{ fieldErrors.terms }}</p>
 
           <button
             type="submit"
-            :disabled="loading || !emailVerified || !form.emailCode"
-            class="w-full px-6 py-3 bg-primary text-white rounded-custom font-bold hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="loading || !canSubmit"
+            class="w-full px-6 py-3 bg-primary text-white rounded-custom font-bold hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
-            {{ loading ? '注册中...' : emailVerified ? '注册' : '请输入6位验证码' }}
+            {{ loading ? '注册中...' : canSubmit ? '注册' : '请完成以上信息' }}
           </button>
 
           <div class="text-center">
             <router-link
               to="/login"
-              class="text-sm text-primary hover:underline"
+              class="text-sm text-primary hover:underline cursor-pointer"
             >
               已有账号？立即登录
             </router-link>
           </div>
         </form>
       </div>
-
-      <!-- 提示信息 -->
-      <div class="mt-6 text-center text-xs text-text-muted/60 animate-fade-in-up" style="animation-delay: 0.2s">
-        <p>注册即表示您同意我们的服务条款和隐私政策</p>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive, watch, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { EyeIcon, EyeOffIcon } from 'lucide-vue-next';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useToast } from '@/composables/useToast';
 
@@ -147,8 +206,10 @@ const toast = useToast();
 const loading = ref(false);
 const sendingCode = ref(false);
 const countdown = ref(0);
-const emailVerified = ref(false);
 const confirmPassword = ref('');
+const showPassword = ref(false);
+const showConfirmPassword = ref(false);
+const agreedToTerms = ref(false);
 
 const form = reactive({
   nickname: '',
@@ -157,33 +218,77 @@ const form = reactive({
   password: '',
 });
 
+const fieldErrors = reactive<Record<string, string>>({
+  email: '',
+  emailCode: '',
+  password: '',
+  confirmPassword: '',
+  nickname: '',
+  terms: '',
+});
+
+// 验证码格式正确（6位数字）
+const emailCodeFilled = computed(() => form.emailCode && /^\d{6}$/.test(form.emailCode));
+
+// 可提交条件
+const canSubmit = computed(
+  () =>
+    emailCodeFilled.value &&
+    form.nickname &&
+    form.email &&
+    form.password &&
+    form.password === confirmPassword.value &&
+    form.password.length >= 6 &&
+    agreedToTerms.value
+);
+
+// 修改邮箱时清空验证码并提示
+watch(
+  () => form.email,
+  (newEmail, oldEmail) => {
+    if (oldEmail && newEmail !== oldEmail && form.emailCode) {
+      form.emailCode = '';
+      toast.warning('邮箱已变更，请重新获取验证码');
+    }
+  }
+);
+
+// 监听验证码输入
+watch(
+  () => form.emailCode,
+  () => {
+    if (fieldErrors.emailCode) fieldErrors.emailCode = '';
+  }
+);
+
 // 发送邮箱验证码
 const sendEmailCode = async () => {
+  clearFieldErrors();
   if (!form.email) {
-    toast.warning('请输入邮箱');
+    fieldErrors.email = '请输入邮箱';
     return;
   }
 
-  // 验证邮箱格式
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(form.email)) {
-    toast.warning('请输入正确的邮箱格式');
+    fieldErrors.email = '请输入正确的邮箱格式';
     return;
   }
 
   sendingCode.value = true;
   try {
-    const result = await authStore.sendEmailCode(form.email) as { message?: string; code?: string; tip?: string };
-    toast.success(result.message || '验证码已发送到您的邮箱');
+    const result = (await authStore.sendEmailCode(form.email)) as {
+      message?: string;
+      code?: string;
+      tip?: string;
+    };
+    toast.success((result.message || '验证码已发送到您的邮箱') + '，5 分钟内有效');
     if (result.code) {
       toast.info(`开发环境验证码：${result.code}`);
     }
 
-    // 重置验证码输入和验证状态（新验证码已发送，旧输入失效）
     form.emailCode = '';
-    emailVerified.value = false;
 
-    // 开始倒计时
     countdown.value = 60;
     const timer = setInterval(() => {
       countdown.value--;
@@ -192,52 +297,49 @@ const sendEmailCode = async () => {
       }
     }, 1000);
   } catch (error: any) {
-    toast.error('发送失败：' + (error.response?.data?.message || error.message));
+    const msg = error.response?.data?.message || error.message;
+    fieldErrors.emailCode = '发送失败：' + msg;
+    toast.error(msg);
   } finally {
     sendingCode.value = false;
   }
 };
 
-// 验证邮箱验证码格式（仅前端格式检查，实际校验在后端注册时）
-const verifyEmailCode = () => {
-  // 验证码应该是6位数字
-  if (form.emailCode && /^\d{6}$/.test(form.emailCode)) {
-    emailVerified.value = true;
-  } else if (form.emailCode && form.emailCode.length > 0) {
-    emailVerified.value = false;
-  } else {
-    emailVerified.value = false;
-  }
+const clearFieldErrors = () => {
+  Object.keys(fieldErrors).forEach((k) => (fieldErrors[k] = ''));
 };
 
 // 注册
 const handleRegister = async () => {
-  // 验证必填项
-  if (!form.nickname || !form.email || !form.password) {
-    toast.warning('请填写完整信息');
+  clearFieldErrors();
+
+  if (!form.nickname) {
+    fieldErrors.nickname = '请输入昵称';
     return;
   }
-
-  // 验证邮箱验证码格式
+  if (!form.email) {
+    fieldErrors.email = '请输入邮箱';
+    return;
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(form.email)) {
+    fieldErrors.email = '请输入正确的邮箱格式';
+    return;
+  }
   if (!form.emailCode || !/^\d{6}$/.test(form.emailCode)) {
-    toast.warning('请输入6位数字验证码');
+    fieldErrors.emailCode = '请输入6位数字验证码';
     return;
   }
-
-  // 验证密码长度
   if (form.password.length < 6) {
-    toast.warning('密码至少需要6位字符');
+    fieldErrors.password = '密码至少需要6位字符';
     return;
   }
-
-  // 验证密码一致性
   if (form.password !== confirmPassword.value) {
-    toast.warning('两次输入的密码不一致');
+    fieldErrors.confirmPassword = '两次输入的密码不一致';
     return;
   }
-
-  if (!form.emailCode) {
-    toast.warning('请输入邮箱验证码');
+  if (!agreedToTerms.value) {
+    fieldErrors.terms = '请同意服务条款和隐私政策';
     return;
   }
 
@@ -250,16 +352,14 @@ const handleRegister = async () => {
       emailCode: form.emailCode,
     });
     toast.success('注册成功！');
-    
-    // 跳转到引导页
     router.push('/onboarding');
   } catch (error: any) {
     const errorMsg = error.response?.data?.message || error.message;
     if (errorMsg.includes('已被注册')) {
+      fieldErrors.email = '该邮箱已被注册';
       toast.error('该邮箱已被注册，请直接登录');
     } else if (errorMsg.includes('验证码错误') || errorMsg.includes('验证码已过期')) {
-      // 验证码错误时，重置验证状态，允许用户重新输入或重新发送
-      emailVerified.value = false;
+      fieldErrors.emailCode = '验证码错误或已过期，请重新获取';
       toast.error('验证码错误或已过期，请检查后重试或重新获取验证码');
     } else {
       toast.error('注册失败：' + errorMsg);
@@ -268,11 +368,6 @@ const handleRegister = async () => {
     loading.value = false;
   }
 };
-
-// 监听验证码输入，检查格式（6位数字）
-watch(() => form.emailCode, (newCode) => {
-  verifyEmailCode();
-});
 </script>
 
 <style scoped>
@@ -292,4 +387,3 @@ watch(() => form.emailCode, (newCode) => {
   }
 }
 </style>
-
