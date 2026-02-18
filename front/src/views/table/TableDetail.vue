@@ -813,6 +813,9 @@ const fetchTable = async () => {
     if (isFirstLoad && !currentIsHost && !currentIsGuest && data.status !== TableStatus.ARCHIVED && !hasJoinedBefore.value) {
       if (authStore.isLoggedIn && authStore.user) {
         joinForm.value.name = authStore.user.nickname;
+      } else if (userStore.guestName) {
+        // 匿名用户：预填上次使用的昵称（跨设备按昵称识别同一人）
+        joinForm.value.name = userStore.guestName;
       }
       isJoinModalOpen.value = true;
     }

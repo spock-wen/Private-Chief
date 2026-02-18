@@ -76,15 +76,29 @@ export class GuestsService {
       });
     }
 
-    // 匿名用户：仅按 sessionId
-    const existingGuest = await this.prisma.guest.findFirst({
+    // 匿名用户：先按 sessionId，再按昵称（跨设备同一人）
+    const existingBySessionId = await this.prisma.guest.findFirst({
       where: { tableId, sessionId },
     });
 
-    if (existingGuest) {
+    if (existingBySessionId) {
       return this.prisma.guest.update({
-        where: { id: existingGuest.id },
+        where: { id: existingBySessionId.id },
         data: { name: name!.trim(), preferences },
+        include: { votes: true },
+      });
+    }
+
+    // 同一饭桌 + 同昵称：视为同一人（手机/电脑多设备），更新 sessionId 绑定新设备
+    const nameTrimmed = name!.trim();
+    const existingByName = await this.prisma.guest.findFirst({
+      where: { tableId, name: nameTrimmed },
+    });
+
+    if (existingByName) {
+      return this.prisma.guest.update({
+        where: { id: existingByName.id },
+        data: { sessionId, preferences },
         include: { votes: true },
       });
     }
@@ -93,7 +107,7 @@ export class GuestsService {
       data: {
         tableId,
         sessionId,
-        name: name!.trim(),
+        name: nameTrimmed,
         preferences,
       },
       include: { votes: true },

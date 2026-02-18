@@ -1,16 +1,17 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
+const SESSION_STORAGE_KEY = 'spock_session_id';
+
 export const useUserStore = defineStore('user', () => {
-  const sessionId = ref('');
+  // 从 localStorage 恢复 sessionId，刷新后保持同一会话
+  const sessionId = ref(localStorage.getItem(SESSION_STORAGE_KEY) || '');
   const guestName = ref(localStorage.getItem('guestName') || '');
 
-  // 初始化时不要自动生成 sessionId，等待从服务器获取
   const initializeSession = (serverSessionId: string) => {
-    // 只有当当前没有会话ID时才设置
-    if (!sessionId.value && serverSessionId) {
+    if (serverSessionId) {
       sessionId.value = serverSessionId;
-      // 我们不存储到 localStorage，因为会话应该由服务器管理
+      localStorage.setItem(SESSION_STORAGE_KEY, serverSessionId);
     }
   };
 

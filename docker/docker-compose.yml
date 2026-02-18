@@ -3,8 +3,8 @@ version: '3.8'
 services:
   spockchef-frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
     container_name: spockchef-frontend
     ports:
       - "8060:8060"
@@ -16,8 +16,8 @@ services:
 
   spockchef-backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
+      context: ..
+      dockerfile: docker/Dockerfile.backend
     container_name: spockchef-backend
     ports:
       - "8070:8070"
