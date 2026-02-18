@@ -33,7 +33,6 @@
               placeholder="请输入邮箱"
               class="w-full px-4 py-3 rounded-custom border border-primary/10 focus:border-primary/30 outline-none transition-all"
               required
-              :disabled="emailVerified"
             />
           </div>
 
@@ -44,25 +43,30 @@
               <input
                 v-model="form.emailCode"
                 type="text"
-                placeholder="请输入验证码"
+                placeholder="请输入6位验证码"
+                maxlength="6"
+                pattern="[0-9]*"
+                inputmode="numeric"
                 class="flex-1 px-4 py-3 rounded-custom border border-primary/10 focus:border-primary/30 outline-none transition-all"
                 required
-                :disabled="emailVerified"
               />
               <button
                 type="button"
                 @click="sendEmailCode"
-                :disabled="countdown > 0 || sendingCode || emailVerified || !form.email"
+                :disabled="countdown > 0 || sendingCode || !form.email"
                 class="px-4 py-3 rounded-custom border border-primary/20 text-primary font-bold text-sm hover:bg-primary/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               >
-                {{ emailVerified ? '已验证' : countdown > 0 ? `${countdown}s` : sendingCode ? '发送中...' : '获取验证码' }}
+                {{ countdown > 0 ? `${countdown}s` : sendingCode ? '发送中...' : '获取验证码' }}
               </button>
             </div>
-            <p v-if="!emailVerified" class="text-xs text-text-muted">
+            <p v-if="!form.emailCode" class="text-xs text-text-muted">
               验证码将发送到您的邮箱，请注意查收
             </p>
-            <p v-else class="text-xs text-green-600">
-              ✓ 邮箱已验证
+            <p v-else-if="emailVerified" class="text-xs text-green-600">
+              ✓ 验证码格式正确（6位数字）
+            </p>
+            <p v-else class="text-xs text-red-600">
+              ✗ 验证码应为6位数字
             </p>
           </div>
 
@@ -105,10 +109,10 @@
 
           <button
             type="submit"
-            :disabled="loading || !emailVerified"
+            :disabled="loading || !emailVerified || !form.emailCode"
             class="w-full px-6 py-3 bg-primary text-white rounded-custom font-bold hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {{ loading ? '注册中...' : emailVerified ? '注册' : '请先验证邮箱' }}
+            {{ loading ? '注册中...' : emailVerified ? '注册' : '请输入6位验证码' }}
           </button>
 
           <div class="text-center">
@@ -131,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, reactive, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useToast } from '@/composables/useToast';
@@ -169,15 +173,15 @@ const sendEmailCode = async () => {
 
   sendingCode.value = true;
   try {
-    // TODO: 调用发送邮箱验证码的 API
-    // const result = await authStore.sendEmailCode(form.email);
-    
-    // 开发环境模拟
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const mockCode = '123456';
-    
-    toast.success('验证码已发送到您的邮箱');
-    toast.info(`开发环境验证码：${mockCode}`);
+    const result = await authStore.sendEmailCode(form.email) as { message?: string; code?: string; tip?: string };
+    toast.success(result.message || '验证码已发送到您的邮箱');
+    if (result.code) {
+      toast.info(`开发环境验证码：${result.code}`);
+    }
+
+    // 重置验证码输入和验证状态（新验证码已发送，旧输入失效）
+    form.emailCode = '';
+    emailVerified.value = false;
 
     // 开始倒计时
     countdown.value = 60;
@@ -187,14 +191,6 @@ const sendEmailCode = async () => {
         clearInterval(timer);
       }
     }, 1000);
-
-    // 开发环境自动验证
-    setTimeout(() => {
-      if (form.emailCode === mockCode) {
-        emailVerified.value = true;
-        toast.success('邮箱验证成功！');
-      }
-    }, 100);
   } catch (error: any) {
     toast.error('发送失败：' + (error.response?.data?.message || error.message));
   } finally {
@@ -202,14 +198,15 @@ const sendEmailCode = async () => {
   }
 };
 
-// 验证邮箱验证码
+// 验证邮箱验证码格式（仅前端格式检查，实际校验在后端注册时）
 const verifyEmailCode = () => {
-  // 开发环境固定验证码
-  if (form.emailCode === '123456') {
+  // 验证码应该是6位数字
+  if (form.emailCode && /^\d{6}$/.test(form.emailCode)) {
     emailVerified.value = true;
-    toast.success('邮箱验证成功！');
+  } else if (form.emailCode && form.emailCode.length > 0) {
+    emailVerified.value = false;
   } else {
-    toast.error('验证码错误');
+    emailVerified.value = false;
   }
 };
 
@@ -221,9 +218,9 @@ const handleRegister = async () => {
     return;
   }
 
-  // 验证邮箱
-  if (!emailVerified.value) {
-    toast.warning('请先验证邮箱');
+  // 验证邮箱验证码格式
+  if (!form.emailCode || !/^\d{6}$/.test(form.emailCode)) {
+    toast.warning('请输入6位数字验证码');
     return;
   }
 
@@ -239,12 +236,18 @@ const handleRegister = async () => {
     return;
   }
 
+  if (!form.emailCode) {
+    toast.warning('请输入邮箱验证码');
+    return;
+  }
+
   loading.value = true;
   try {
     await authStore.register({
       nickname: form.nickname,
       email: form.email,
       password: form.password,
+      emailCode: form.emailCode,
     });
     toast.success('注册成功！');
     
@@ -254,6 +257,10 @@ const handleRegister = async () => {
     const errorMsg = error.response?.data?.message || error.message;
     if (errorMsg.includes('已被注册')) {
       toast.error('该邮箱已被注册，请直接登录');
+    } else if (errorMsg.includes('验证码错误') || errorMsg.includes('验证码已过期')) {
+      // 验证码错误时，重置验证状态，允许用户重新输入或重新发送
+      emailVerified.value = false;
+      toast.error('验证码错误或已过期，请检查后重试或重新获取验证码');
     } else {
       toast.error('注册失败：' + errorMsg);
     }
@@ -262,12 +269,9 @@ const handleRegister = async () => {
   }
 };
 
-// 监听验证码输入
-import { watch } from 'vue';
+// 监听验证码输入，检查格式（6位数字）
 watch(() => form.emailCode, (newCode) => {
-  if (newCode === '123456' && !emailVerified.value) {
-    verifyEmailCode();
-  }
+  verifyEmailCode();
 });
 </script>
 

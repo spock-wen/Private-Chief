@@ -59,6 +59,8 @@ export const useAuthStore = defineStore('auth', () => {
     password?: string;
     nickname: string;
     avatar?: string;
+    /** 邮箱验证码（邮箱注册时必填） */
+    emailCode?: string;
   }) => {
     const response: AuthTokens = await request.post('/auth/register', data);
     setAuth(response);
@@ -76,9 +78,14 @@ export const useAuthStore = defineStore('auth', () => {
     return response;
   };
 
-  // 发送验证码
+  // 发送手机验证码
   const sendCode = async (phone: string) => {
     return await request.post('/auth/send-code', { phone });
+  };
+
+  // 发送邮箱验证码
+  const sendEmailCode = async (email: string) => {
+    return await request.post('/auth/send-email-code', { email });
   };
 
   // 刷新 Token
@@ -152,6 +159,7 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     wechatLogin,
     sendCode,
+    sendEmailCode,
     refresh,
     fetchUser,
     updateProfile,
