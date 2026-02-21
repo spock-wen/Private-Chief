@@ -1,0 +1,29 @@
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { AppModule } from './app.module';
+import { json, urlencoded } from 'express';
+import { HttpExceptionFilter } from './common/http-exception.filter';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Increase payload size limit for large image uploads (Base64)
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ extended: true, limit: '50mb' }));
+
+  // 启用全局输入验证
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+
+  // Add global API prefix
+  app.setGlobalPrefix('api');
+
+  app.enableCors();
+  await app.listen(process.env.PORT ?? 8070);
+}
+
+void bootstrap().catch((error) => {
+  console.error('Error starting server:', error);
+  process.exit(1);
+});

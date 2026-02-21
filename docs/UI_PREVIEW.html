@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpockChef 视觉预览 - 私厨助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#D97706', // 琥珀金
+                        bgWarm: '#FFFBF0', // 暖米白
+                        textDark: '#431407', // 深褐
+                        accent: '#FDE68A',
+                    },
+                    borderRadius: {
+                        'xl': '16px',
+                    },
+                    fontFamily: {
+                        serif: ['"Noto Serif SC"', 'serif'],
+                        sans: ['"Noto Sans SC"', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'warm': '0 10px 30px -10px rgba(217, 119, 6, 0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FFFBF0;
+            color: #431407;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .serif-title {
+            font-family: 'Noto Serif SC', serif;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(217, 119, 6, 0.1);
+        }
+        .animate-pop {
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .animate-pop:active {
+            transform: scale(0.95);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(217, 119, 6, 0.2);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen">
+
+    <!-- Header -->
+    <header class="max-w-4xl mx-auto mb-12 text-center">
+        <h1 class="serif-title text-4xl font-bold text-primary mb-2">SpockChef</h1>
+        <p class="text-textDark/60">为家庭聚餐营造温馨、私密的数字化体验</p>
+    </header>
+
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
+
+        <!-- Scene E: Global Menu Library (Independent Management) -->
+        <section class="space-y-6 lg:col-span-2">
+            <div class="flex items-center justify-between mb-4 border-b border-primary/10 pb-4">
+                <h2 class="serif-title text-2xl font-bold flex items-center">
+                    <span class="w-2 h-6 bg-primary rounded-full mr-3"></span>
+                    场景 E：全量菜单库管理 (独立于饭桌)
+                </h2>
+                <div class="flex space-x-2">
+                    <button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-primary/20 animate-pop">+ 新增菜品</button>
+                    <button class="bg-white text-textDark/60 px-4 py-2 rounded-lg text-sm font-medium border border-primary/10 hover:border-primary/30 transition-all">批量操作</button>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-xl shadow-warm">
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div class="relative flex-1">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-textDark/40">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </span>
+                        <input type="text" placeholder="搜索全量菜谱 (按菜名、标签)..." class="w-full pl-11 pr-4 py-3 bg-white border border-primary/10 rounded-xl outline-none focus:border-primary transition-all text-sm">
+                    </div>
+                    <div class="flex space-x-2 overflow-x-auto pb-2 custom-scrollbar">
+                        <button class="px-4 py-2 bg-primary text-white rounded-full text-xs font-bold whitespace-nowrap">全部 (128)</button>
+                        <button class="px-4 py-2 bg-white text-textDark/60 rounded-full text-xs font-medium border border-primary/5 hover:border-primary/20 whitespace-nowrap">热菜</button>
+                        <button class="px-4 py-2 bg-white text-textDark/60 rounded-full text-xs font-medium border border-primary/5 hover:border-primary/20 whitespace-nowrap">凉菜</button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-primary/10 text-xs text-textDark/40 uppercase tracking-wider">
+                                <th class="py-4 px-2 font-medium"><input type="checkbox" class="rounded border-primary/20"></th>
+                                <th class="py-4 px-4 font-medium">菜品信息</th>
+                                <th class="py-4 px-4 font-medium">分类</th>
+                                <th class="py-4 px-4 font-medium">标签 / 过敏原</th>
+                                <th class="py-4 px-4 font-medium text-right">管理</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm divide-y divide-primary/5">
+                            <tr class="hover:bg-accent/5 transition-colors">
+                                <td class="py-4 px-2"><input type="checkbox" class="rounded border-primary/20"></td>
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-12 h-12 rounded-lg bg-[url('https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400')] bg-cover bg-center"></div>
+                                        <p class="font-bold">油焖大虾</p>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4 text-xs text-textDark/60">热菜</td>
+                                <td class="py-4 px-4">
+                                    <span class="px-2 py-0.5 bg-bgWarm text-primary text-[10px] rounded border border-primary/10">招牌</span>
+                                </td>
+                                <td class="py-4 px-4 text-right space-x-3">
+                                    <button class="text-primary hover:underline text-xs font-bold">编辑</button>
+                                    <button class="text-red-500 hover:underline text-xs font-bold">删除</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scene A: Host Dashboard (Planning) -->
+        <section class="space-y-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="serif-title text-2xl font-bold flex items-center">
+                    <span class="w-2 h-6 bg-primary rounded-full mr-3"></span>
+                    场景 A：饭桌点菜 (拟定名单)
+                </h2>
+                <span class="px-3 py-1 bg-accent text-primary text-sm font-bold rounded-full border border-primary/20">筹备中</span>
+            </div>
+            
+            <div class="glass-card p-6 rounded-xl shadow-warm h-[500px] flex flex-col">
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold mb-2">初春家宴 🌸</h3>
+                    <p class="text-sm text-textDark/60 italic">2026年3月21日 · 18:30 · 翠微居</p>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium text-sm">本场候选菜单 (已选 6 道)</span>
+                        <button class="text-primary text-xs font-bold">+ 从菜谱中挑选</button>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="relative group rounded-xl overflow-hidden border border-primary/10">
+                            <div class="h-24 bg-gray-200 bg-[url('https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400')] bg-cover bg-center"></div>
+                            <div class="p-3 bg-white">
+                                <p class="text-xs font-bold">油焖大虾</p>
+                                <p class="text-[10px] text-textDark/40">热菜 · 招牌</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="w-full mt-6 bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 animate-pop">
+                    开启投票，邀请客人
+                </button>
+            </div>
+        </section>
+
+        <!-- Scene D: Menu Selection (The Picker) -->
+        <section class="space-y-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="serif-title text-2xl font-bold flex items-center">
+                    <span class="w-2 h-6 bg-primary rounded-full mr-3"></span>
+                    场景 D：选择候选菜品 (点菜器)
+                </h2>
+            </div>
+
+            <div class="glass-card p-6 rounded-xl shadow-warm h-[500px] flex flex-col border-2 border-primary/30">
+                <div class="relative mb-4">
+                    <input type="text" placeholder="搜索菜名、口味标签..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-primary/10 rounded-xl outline-none focus:border-primary text-xs">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-textDark/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+
+                <div class="flex space-x-2 mb-4 overflow-x-auto pb-1 custom-scrollbar">
+                    <button class="px-3 py-1.5 bg-primary text-white rounded-full text-[10px] font-bold">全部</button>
+                    <button class="px-3 py-1.5 bg-white text-textDark/60 rounded-full text-[10px] font-medium border border-primary/5">热菜</button>
+                    <button class="px-3 py-1.5 bg-white text-textDark/60 rounded-full text-[10px] font-medium border border-primary/5">凉菜</button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-2">
+                    <div class="flex items-center justify-between p-2 bg-accent/10 rounded-xl border border-primary/20">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-10 h-10 rounded-lg bg-[url('https://images.unsplash.com/photo-1563379091339-03b21bc4a4f8?w=400')] bg-cover bg-center"></div>
+                            <p class="text-xs font-bold">红烧狮子头</p>
+                        </div>
+                        <div class="w-5 h-5 rounded-full bg-primary flex items-center justify-center text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-primary/10 flex items-center justify-between">
+                    <p class="text-[10px] text-textDark/60">已选 <span class="text-primary font-bold">12</span> 道</p>
+                    <button class="bg-primary text-white px-6 py-2 rounded-lg text-xs font-bold animate-pop">确认选择</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scene B: Guest Voting Experience -->
+        <section class="space-y-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="serif-title text-2xl font-bold flex items-center">
+                    <span class="w-2 h-6 bg-primary rounded-full mr-3"></span>
+                    场景 B：客人投票页
+                </h2>
+                <span class="px-3 py-1 bg-red-100 text-red-600 text-sm font-bold rounded-full border border-red-200">投票中 🔥</span>
+            </div>
+
+            <div class="glass-card p-6 rounded-xl shadow-warm bg-white/90 h-[500px] flex flex-col">
+                <div class="flex items-center space-x-4 mb-6">
+                    <div class="w-12 h-12 bg-accent rounded-full flex items-center justify-center text-primary font-bold">厨</div>
+                    <p class="font-bold text-sm">来看看聚餐想吃什么？</p>
+                </div>
+
+                <div class="mb-6 p-4 bg-bgWarm rounded-xl border border-primary/10">
+                    <p class="text-[10px] font-bold text-primary mb-3">实时人气榜</p>
+                    <div class="flex items-center text-[10px]">
+                        <span class="w-16 truncate">东坡肘子</span>
+                        <div class="flex-1 h-1.5 bg-white rounded-full overflow-hidden mx-2">
+                            <div class="h-full bg-primary" style="width: 85%"></div>
+                        </div>
+                        <span class="font-bold">12 赞</span>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3">
+                    <div class="flex items-center justify-between p-3 bg-white rounded-xl border border-primary/5">
+                        <p class="text-xs font-bold">东坡肘子</p>
+                        <button class="px-3 py-1.5 rounded-full bg-accent/30 text-primary text-[10px] font-bold animate-pop">想吃</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scene C: Bill Settlement Modal -->
+        <section class="space-y-6 flex flex-col items-center">
+            <div class="w-full flex items-center justify-between mb-4">
+                <h2 class="serif-title text-2xl font-bold flex items-center">
+                    <span class="w-2 h-6 bg-primary rounded-full mr-3"></span>
+                    场景 C：账单结算
+                </h2>
+            </div>
+            
+            <div class="glass-card p-8 rounded-xl shadow-warm bg-white text-center w-full h-[500px] flex flex-col justify-center">
+                <h3 class="text-xl font-bold mb-2">聚餐结束啦！🎉</h3>
+                <p class="text-xs text-textDark/60 mb-8">输入本次总支出，系统将自动计算 AA 金额</p>
+                
+                <div class="mb-8 relative max-w-[200px] mx-auto">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-primary font-bold text-lg">¥</span>
+                    <input type="number" class="w-full pl-8 pr-4 py-3 bg-bgWarm border-2 border-primary/10 rounded-xl text-xl font-bold text-center outline-none" value="1280.00">
+                </div>
+
+                <div class="bg-accent/20 p-4 rounded-xl border border-primary/5 space-y-2 max-w-[250px] mx-auto w-full">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-textDark/60">参与人数</span>
+                        <span class="font-bold">8 人</span>
+                    </div>
+                    <div class="flex justify-between items-end pt-2 border-t border-primary/10">
+                        <span class="text-[10px] text-textDark/60">人均分摊</span>
+                        <span class="text-2xl font-bold text-primary">¥ 160.00</span>
+                    </div>
+                </div>
+
+                <button class="mt-8 bg-textDark text-white font-bold py-3 px-8 rounded-xl animate-pop text-sm mx-auto">
+                    完成并导出账单
+                </button>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Floating UI Specs -->
+    <div class="fixed bottom-4 right-4 bg-white/90 backdrop-blur p-4 rounded-xl border border-primary/10 shadow-2xl max-w-xs text-[10px] space-y-2">
+        <p class="font-bold text-primary">UI 设计规范执行清单：</p>
+        <div class="grid grid-cols-2 gap-2">
+            <div class="flex items-center"><span class="w-2 h-2 rounded-full bg-primary mr-1"></span> Primary: #D97706</div>
+            <div class="flex items-center"><span class="w-2 h-2 rounded-full bg-bgWarm mr-1 border"></span> BG: #FFFBF0</div>
+        </div>
+        <p class="opacity-60 italic">* 遵循 16px 圆角规范、Noto Serif SC 字体及暖色弥散阴影。</p>
+    </div>
+
+</body>
+</html>

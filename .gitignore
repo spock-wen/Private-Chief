@@ -1,0 +1,92 @@
+# System files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist
+dist-ssr
+
+# Node.js dependencies
+node_modules
+
+# Test coverage
+coverage
+*.lcov
+
+# TypeScript
+*.tsbuildinfo
+
+# Docker
+.dockerignore
+
+# Nginx (保留 docker 目录下的配置用于部署)
+nginx.conf
+!docker/nginx.conf
+
+# Deployment scripts (deploy.sh 可取消忽略以纳入版本控制)
+# deploy.sh
+test-api.sh
+
+# Documentation
+*.md
+!README.md
+!PRD.md
+!PROJECT_STANDARDS.md
+!DEPLOY.md
+!UI_PREVIEW.html
+
+# Design system
+!design-system/
+
+# Backup files
+*.bak
+*.backup
+
+# OS generated files
+Thumbs.db
+.DS_Store
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# AI tools settings (keep skills, ignore local settings)
+.claude/settings.local.json
+.trae/
+
+# Package lock files (use npm ci to install from package.json)
+package-lock.json
+**/package-lock.json

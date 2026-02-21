@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #D97706;
+  --color-accent: #FDE68A;
+  --color-bg-warm: #FFFBF0;
+  --color-text-dark: #431407;
+  --color-text-muted: #92400E;
+
+  --radius-custom: 16px;
+
+  --shadow-warm: 0 20px 50px -12px rgba(217, 119, 6, 0.15);
+
+  --animate-fade-in-up: fade-in-up 0.5s ease-out forwards;
+  --animate-pop: pop 0.3s cubic-bezier(0.26, 0.53, 0.74, 1.48) forwards;
+  --animate-shimmer: shimmer 2.5s infinite linear;
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  @keyframes fade-in-up {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pop {
+    0% {
+      transform: scale(0.9);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-bg-warm text-text-dark antialiased;
+    font-family: 'Inter', 'PingFang SC', system-ui, sans-serif;
+  }
+
+  .serif-title {
+    font-family: 'Noto Serif SC', serif;
+  }
+}
+
+@layer components {
+  .chef-card {
+    @apply bg-white/80 backdrop-blur-md border border-primary/10 rounded-custom shadow-warm transition-all duration-300;
+  }
+  
+  .chef-card-hover {
+    @apply hover:shadow-xl hover:border-primary/30 hover:-translate-y-1 active:scale-[0.98];
+  }
+}
+
+#app {
+  min-height: 100vh;
+}

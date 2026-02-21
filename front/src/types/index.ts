@@ -1,0 +1,77 @@
+export const Category = {
+  HOT_DISH: 'HOT_DISH',
+  COLD_DISH: 'COLD_DISH',
+  SOUP: 'SOUP',
+  STAPLE: 'STAPLE',
+  DRINK: 'DRINK',
+} as const;
+
+export type Category = typeof Category[keyof typeof Category];
+
+export const TableStatus = {
+  PLANNING: 'PLANNING',
+  VOTING: 'VOTING',
+  LOCKED: 'LOCKED',
+  ARCHIVED: 'ARCHIVED',
+} as const;
+
+export type TableStatus = typeof TableStatus[keyof typeof TableStatus];
+
+export interface Dish {
+  id: string;
+  name: string;
+  description?: string;
+  image?: string;
+  category: Category;
+  tags: string[];
+  allergens?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Guest {
+  id: string;
+  sessionId: string;
+  name: string;
+  preferences?: string;
+  userId?: string;  // 已登录用户 ID，用于主人标识与多设备合并
+  tableId: string;
+  votes: Vote[];
+}
+
+export interface Vote {
+  id: string;
+  guestId: string;
+  dishId: string;
+  tableId: string;
+}
+
+export interface Table {
+  id: string;
+  name: string;
+  time: string;
+  location?: string;
+  address?: string;
+  addressDetail?: string;
+  latitude?: number;
+  longitude?: number;
+  status: TableStatus;
+  totalExpense?: number;
+  familyId: string;
+  creatorId: string;  // 创建者用户ID（用于权限判断）
+  creator?: {
+    id: string;
+    nickname: string;
+    avatar?: string;
+  };
+  family?: {
+    id: string;
+    name: string;
+  };
+  candidateDishes: Dish[];
+  finalDishIds: string[];
+  finalDishes: Dish[];
+  guests: Guest[];
+  createdAt: string;
+  updatedAt: string;
+}
