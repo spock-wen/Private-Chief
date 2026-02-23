@@ -210,8 +210,8 @@ export class FamiliesService {
   /**
    * 生成邀请码
    */
-  async createInvitation(createInvitationDto: CreateInvitationDto, userId: string) {
-    const { familyId, maxUses = 1, expiresInDays = 7 } = createInvitationDto;
+  async createInvitation(familyId: string, createInvitationDto: CreateInvitationDto, userId: string) {
+    const { maxUses = 1, expiresInDays = 7 } = createInvitationDto;
 
     // 检查是否是主人
     await this.checkOwnerPermission(familyId, userId);

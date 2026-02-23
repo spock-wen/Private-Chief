@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useFamilyStore } from '@/stores/useFamilyStore';
 import { getBindInfo } from '@/api/bind-account';
+import Icons from '@/components/Icons.vue';
 
 const authStore = useAuthStore();
 const familyStore = useFamilyStore();
@@ -17,43 +18,43 @@ const bindInfo = ref({
   phone: ''
 });
 
-const menuItems = [
+const menuItems = computed(() => [
   {
     id: 'bind-phone',
     title: '绑定手机号',
-    icon: '📱',
+    icon: 'phone',
     subtitle: bindInfo.value.hasPhone ? bindInfo.value.phone : '未绑定',
     url: '/pages/profile/bind-phone'
   },
   {
     id: 'bind-wechat',
     title: '绑定微信',
-    icon: '💬',
+    icon: 'wechat',
     subtitle: bindInfo.value.hasWechat ? '已绑定' : '未绑定',
     url: '/pages/profile/bind-wechat'
   },
   {
     id: 'family-settings',
     title: '家庭设置',
-    icon: '🏠',
+    icon: 'home',
     subtitle: currentFamily.value?.name || '未加入家庭',
     url: '/pages/family/settings'
   },
   {
     id: 'user-agreement',
     title: '用户协议',
-    icon: '📄',
+    icon: 'file',
     subtitle: '',
     url: '/pages/agreement/user-agreement'
   },
   {
     id: 'privacy-policy',
     title: '隐私政策',
-    icon: '🔒',
+    icon: 'lock',
     subtitle: '',
     url: '/pages/agreement/privacy-policy'
   }
-];
+]);
 
 onMounted(async () => {
   if (authStore.isLoggedIn) {
@@ -87,335 +88,310 @@ function handleLogout() {
   });
 }
 
-function navigateTo(url) {
+function navigateTo(url: string) {
   uni.navigateTo({ url });
 }
 </script>
 
 <template>
-  <view class="container min-h-screen bg-bg-warm">
-    <!-- 顶部渐变背景 -->
-    <view class="bg-gradient-to-br from-primary to-text-muted h-64 relative overflow-hidden">
-      <view class="absolute inset-0 opacity-10">
-        <view class="w-full h-full flex items-center justify-center">
-          <text class="text-[240px]">👤</text>
-        </view>
+  <view class="page">
+    <!-- 自定义导航栏 -->
+    <view class="custom-nav">
+      <view class="nav-status-bar"></view>
+      <view class="nav-content">
+        <view class="nav-title">我的</view>
+        <view class="nav-right"></view>
       </view>
     </view>
 
-    <!-- 内容区域 -->
-    <view class="-mt-24 px-6 pb-20">
-      <!-- 用户信息卡片 -->
-      <view class="chef-card p-6 mb-8 relative z-10 bg-white/90 backdrop-blur-md">
-        <view class="flex flex-col items-center text-center space-y-4">
-          <!-- 头像 -->
-          <view class="w-32 h-32 bg-accent-30 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-            <text class="text-6xl">{{ user?.nickname?.charAt(0) || '我' }}</text>
+    <view class="header-bg"></view>
+    
+    <view class="page-content">
+      <view class="user-card">
+        <view class="avatar">
+          <text class="avatar-text">{{ user?.nickname?.charAt(0) || '我' }}</text>
+        </view>
+        
+        <view class="user-info">
+          <text class="user-name">{{ user?.nickname || '用户' }}</text>
+          <text class="user-email">{{ user?.email || '未设置邮箱' }}</text>
+          <view v-if="currentFamily" class="family-badge">
+            <text class="family-name">{{ currentFamily.name }}</text>
+            <text class="family-role">{{ isOwner ? '主人' : '成员' }}</text>
           </view>
-          
-          <!-- 用户信息 -->
-          <div class="space-y-2">
-            <text class="serif-title text-2xl font-bold text-text-dark">{{ user?.nickname || '用户' }}</text>
-            <text class="text-text-muted text-sm">{{ user?.email || '未设置邮箱' }}</text>
-            <text v-if="currentFamily" class="text-primary text-xs font-bold mt-1">
-              {{ currentFamily.name }} · {{ isOwner ? '主人' : '成员' }}
-            </text>
-          </div>
         </view>
       </view>
 
-      <!-- 菜单列表 -->
-      <view class="chef-card mb-8 overflow-hidden">
+      <view class="menu-list">
         <view 
           v-for="item in menuItems" 
           :key="item.id"
-          class="menu-item flex items-center justify-between p-6 border-b border-primary-10 last-border-b-0 hover-bg-primary-5 transition-colors"
+          class="menu-item"
           @click="navigateTo(item.url)"
         >
-          <view class="flex items-center gap-4">
-            <view class="w-12 h-12 bg-primary-10 rounded-custom flex items-center justify-center text-xl">
-              {{ item.icon }}
+          <view class="menu-left">
+            <view class="menu-icon">
+              <Icons :name="item.icon" class="icon-svg" />
             </view>
-            <div class="space-y-1">
-              <text class="font-bold text-text-dark">{{ item.title }}</text>
-              <text v-if="item.subtitle" class="text-text-muted text-xs">{{ item.subtitle }}</text>
-            </div>
+            <view class="menu-content">
+              <text class="menu-title">{{ item.title }}</text>
+              <text v-if="item.subtitle" class="menu-subtitle">{{ item.subtitle }}</text>
+            </view>
           </view>
-          <text class="text-text-muted">›</text>
+          <text class="menu-arrow">›</text>
         </view>
       </view>
 
-      <!-- 退出登录按钮 -->
-      <button 
-        class="w-full py-4 bg-primary-10 text-primary font-bold rounded-custom hover-bg-primary-20 transition-colors mb-8"
-        @click="handleLogout"
-      >
-        退出登录
+      <button class="logout-btn" @click="handleLogout">
+        <text>退出登录</text>
       </button>
 
-      <!-- 版本信息 -->
-      <view class="text-center">
-        <text class="text-text-muted/40 text-xs font-medium uppercase tracking-[0.2em]">SpockChef 私厨 v1.0.0</text>
+      <view class="footer">
+        <text class="footer-text">私厨助手 v1.0.0</text>
       </view>
     </view>
   </view>
 </template>
 
 <style scoped>
-.container {
+.page {
   min-height: 100vh;
-  background-color: var(--color-bg-warm);
+  background: #FEF2F2;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
 }
 
-.bg-gradient-to-br {
-  background-image: linear-gradient(to bottom right, var(--color-primary), var(--color-text-muted));
+.header-bg {
+  height: 320rpx;
+  background: linear-gradient(135deg, #DC2626 0%, #FCA5A5 100%);
+  margin-top: calc(var(--status-bar-height, 44rpx) + 100rpx);
 }
 
-.h-64 {
-  height: 16rem;
+.header-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255, 0.1);
 }
 
-.-mt-24 {
-  margin-top: -6rem;
+.page-content {
+  padding: 0 32rpx 64rpx;
+  margin-top: calc(-120rpx - env(safe-area-inset-top, 0));
+  position: relative;
+  z-index: 1;
 }
 
-.px-6 {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
+@media screen and (max-width: 375px) {
+  .page-content {
+    padding: 0 24rpx 48rpx;
+  }
+  
+  .user-card {
+    padding: 48rpx 24rpx;
+  }
+  
+  .avatar {
+    width: 140rpx;
+    height: 140rpx;
+  }
+  
+  .avatar-text {
+    font-size: 48rpx;
+  }
 }
 
-.py-6 {
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
+@media screen and (min-width: 414px) {
+  .page-content {
+    padding: 0 48rpx 96rpx;
+  }
+  
+  .user-card {
+    padding: 64rpx 48rpx;
+  }
+  
+  .avatar {
+    width: 180rpx;
+    height: 180rpx;
+  }
+  
+  .avatar-text {
+    font-size: 56rpx;
+  }
 }
 
-.py-4 {
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-}
-
-.pb-20 {
-  padding-bottom: 5rem;
-}
-
-.mb-8 {
-  margin-bottom: 2rem;
-}
-
-.flex {
+.user-card {
+  background: #FFFFFF;
+  border: 2rpx solid #FECACA;
+  border-radius: 20rpx;
+  padding: 64rpx 32rpx;
+  margin-bottom: 32rpx;
+  box-shadow: 0 4rpx 6rpx rgba(0, 0, 0, 0.07);
   display: flex;
-}
-
-.flex-col {
   flex-direction: column;
-}
-
-.items-center {
   align-items: center;
-}
-
-.justify-center {
-  justify-content: center;
-}
-
-.justify-between {
-  justify-content: space-between;
-}
-
-.space-y-2 {
-  gap: 0.5rem;
-}
-
-.space-y-4 {
-  gap: 1rem;
-}
-
-.text-center {
   text-align: center;
 }
 
-.text-xl {
-  font-size: 1.25rem;
+.avatar {
+  width: 160rpx;
+  height: 160rpx;
+  background: #DC2626;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4rpx solid #fff;
+  box-shadow: 0 10rpx 15rpx rgba(0, 0, 0, 0.1);
+  margin-bottom: 24rpx;
 }
 
-.text-2xl {
-  font-size: 1.5rem;
-}
-
-.text-6xl {
-  font-size: 3.75rem;
-}
-
-.text-sm {
-  font-size: 0.875rem;
-}
-
-.text-xs {
-  font-size: 0.75rem;
-}
-
-.font-bold {
+.avatar-text {
+  font-size: 56rpx;
+  color: #fff;
   font-weight: 700;
 }
 
-.font-medium {
-  font-weight: 500;
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
 }
 
-.text-text-dark {
-  color: var(--color-text-dark);
+.user-name {
+  font-size: 40rpx;
+  color: #450A0A;
+  font-weight: 700;
 }
 
-.text-text-muted {
-  color: var(--color-text-muted);
+.user-email {
+  font-size: 28rpx;
+  color: #991B1B;
 }
 
-.text-primary {
-  color: var(--color-primary);
+.family-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 24rpx;
+  background: #FEF2F2;
+  border-radius: 999rpx;
+  margin-top: 8rpx;
 }
 
-.bg-accent {
-  background-color: var(--color-accent);
+.family-name {
+  font-size: 24rpx;
+  color: #DC2626;
+  font-weight: 600;
 }
 
-.bg-white {
-  background-color: #FFFFFF;
+.family-role {
+  font-size: 20rpx;
+  color: #DC2626;
 }
 
-.bg-primary {
-  background-color: var(--color-primary);
-}
-
-.bg-accent-30 {
-    background-color: rgba(253, 230, 138, 0.3);
-  }
-
-  .bg-primary-10 {
-    background-color: rgba(217, 119, 6, 0.1);
-  }
-
-  .bg-primary-20 {
-    background-color: rgba(217, 119, 6, 0.2);
-  }
-
-  .bg-white-90 {
-    background-color: rgba(255, 255, 255, 0.9);
-  }
-
-  .border {
-    border-width: 1px;
-  }
-
-  .border-4 {
-    border-width: 4px;
-  }
-
-  .border-b {
-    border-bottom-width: 1px;
-  }
-
-  .border-white {
-    border-color: #FFFFFF;
-  }
-
-  .border-primary-10 {
-    border-color: rgba(217, 119, 6, 0.1);
-  }
-
-  .rounded-full {
-    border-radius: 9999px;
-  }
-
-  .rounded-custom {
-    border-radius: var(--radius-custom);
-  }
-
-  .shadow-lg {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  }
-
-  .relative {
-    position: relative;
-  }
-
-  .absolute {
-    position: absolute;
-  }
-
-  .inset-0 {
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-  }
-
-  .z-10 {
-    z-index: 10;
-  }
-
-  .w-32 {
-    width: 8rem;
-  }
-
-  .h-32 {
-    height: 8rem;
-  }
-
-  .w-12 {
-    width: 3rem;
-  }
-
-  .h-12 {
-    height: 3rem;
-  }
-
-  .w-full {
-    width: 100%;
-  }
-
-  .opacity-10 {
-    opacity: 0.1;
-  }
-
-  .backdrop-blur-md {
-    backdrop-filter: blur(12px);
-  }
-
-  .last-border-b-0:last-child {
-    border-bottom-width: 0;
-  }
-
-  .hover-bg-primary-5:hover {
-    background-color: rgba(217, 119, 6, 0.05);
-  }
-
-  .hover-bg-primary-20:hover {
-    background-color: rgba(217, 119, 6, 0.2);
-  }
-
-  .transition-colors {
-    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 300ms;
-  }
-
-.serif-title {
-  font-family: 'Noto Serif SC', serif;
-}
-
-.chef-card {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(217, 119, 6, 0.1);
-  border-radius: var(--radius-custom);
-  box-shadow: var(--shadow-warm);
-  transition: all 0.3s;
+.menu-list {
+  background: #FFFFFF;
+  border: 2rpx solid #FECACA;
+  border-radius: 20rpx;
+  overflow: hidden;
+  margin-bottom: 32rpx;
+  box-shadow: 0 4rpx 6rpx rgba(0, 0, 0, 0.07);
 }
 
 .menu-item {
-  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 24rpx;
+  border-bottom: 1rpx solid #FECACA;
+  transition: all 300ms ease;
+}
+
+.menu-item:last-child {
+  border-bottom: none;
 }
 
 .menu-item:active {
-  background-color: rgba(217, 119, 6, 0.05);
+  background: #FEF2F2;
+}
+
+.menu-left {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  flex: 1;
+}
+
+.menu-icon {
+  width: 72rpx;
+  height: 72rpx;
+  background: #FEF2F2;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-text {
+  font-size: 36rpx;
+}
+
+.menu-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.menu-title {
+  font-size: 28rpx;
+  color: #450A0A;
+  font-weight: 600;
+}
+
+.menu-subtitle {
+  font-size: 24rpx;
+  color: #991B1B;
+}
+
+.menu-arrow {
+  font-size: 36rpx;
+  color: #991B1B;
+}
+
+.logout-btn {
+  width: 100%;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FEF2F2;
+  border: 2rpx solid #FECACA;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #DC2626;
+  margin-bottom: 32rpx;
+  transition: all 300ms ease;
+}
+
+.logout-btn::after {
+  border: none;
+}
+
+.logout-btn:active {
+  transform: scale(0.98);
+  background: #DC2626;
+  color: #fff;
+}
+
+.footer {
+  text-align: center;
+  padding: 48rpx 0;
+}
+
+.footer-text {
+  font-size: 20rpx;
+  color: #991B1B;
 }
 </style>

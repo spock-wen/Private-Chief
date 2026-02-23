@@ -117,4 +117,14 @@ export class AuthController {
   async unbindWechat(@CurrentUser() user: any) {
     return this.authService.unbindWechat(user.id);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('bind-info')
+  async getBindInfo(@CurrentUser() user: any) {
+    return {
+      phone: user.phone,
+      wechatOpenId: user.wechatOpenId ? true : false,
+      email: user.email
+    };
+  }
 }

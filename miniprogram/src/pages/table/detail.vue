@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useFamilyStore } from '@/stores/useFamilyStore';
 import { request } from '@/api/request';
 import type { Table, Dish } from '@/types';
+import Icons from '@/components/Icons.vue';
 
 const authStore = useAuthStore();
 const familyStore = useFamilyStore();
@@ -38,14 +39,14 @@ const isGuest = computed(() => {
 });
 
 const statusConfig = {
-  PLANNING: { label: '筹备中', class: 'bg-accent-20 text-text-muted border-primary-20' },
-  VOTING: { label: '投票中 🔥', class: 'bg-primary text-white border-transparent' },
-  LOCKED: { label: '已锁定 🔒', class: 'bg-success-10 text-success border-success-30' },
-  ARCHIVED: { label: '已结束 ✅', class: 'bg-gray-100 text-gray-500 border-gray-300 opacity-60' },
-  draft: { label: '筹备中', class: 'bg-accent-20 text-text-muted border-primary-20' },
-  voting: { label: '投票中 🔥', class: 'bg-primary text-white border-transparent' },
-  confirmed: { label: '已确定 🔒', class: 'bg-success-10 text-success border-success-30' },
-  completed: { label: '已结束 ✅', class: 'bg-gray-100 text-gray-500 border-gray-300 opacity-60' },
+  PLANNING: { label: '筹备中', class: 'status-plain', icon: 'edit' },
+  VOTING: { label: '投票中', class: 'status-active', icon: 'fire' },
+  LOCKED: { label: '已确定', class: 'status-done', icon: 'lock' },
+  ARCHIVED: { label: '已结束', class: 'status-done', icon: 'check' },
+  draft: { label: '筹备中', class: 'status-plain', icon: 'edit' },
+  voting: { label: '投票中', class: 'status-active', icon: 'fire' },
+  confirmed: { label: '已确定', class: 'status-done', icon: 'lock' },
+  completed: { label: '已结束', class: 'status-done', icon: 'check' },
 };
 
 const categoryLabels = {
@@ -55,8 +56,6 @@ const categoryLabels = {
   STAPLE: '主食',
   DRINK: '饮料'
 };
-
-const activeTab = ref('ALL');
 
 const groupedDishes = computed(() => {
   if (!table.value) return {};
@@ -72,7 +71,6 @@ const groupedDishes = computed(() => {
     groups[category].push(dish);
   });
 
-  // 分类内按票数排序
   Object.keys(groups).forEach(cat => {
     groups[cat].sort((a, b) => getVoteCount(b.id) - getVoteCount(a.id));
   });
@@ -105,13 +103,6 @@ function hasVoted(dishId: string) {
   return myGuest?.votes?.some(v => v.dishId === dishId) || false;
 }
 
-function getVotersForDish(dishId: string) {
-  if (!table.value) return [];
-  return table.value.guests.filter(g => 
-    g.votes?.some(v => v.dishId === dishId)
-  );
-}
-
 function getCategoryRank(dishId: string, category: string) {
   const dishesInCat = groupedDishes.value[category] || [];
   const index = dishesInCat.findIndex(d => d.id === dishId);
@@ -132,14 +123,17 @@ async function fetchTable() {
   loading.value = true;
   loadError.value = '';
   try {
-    const data: Table = await request.get(`/tables/${tableId.value}`);
+    const data: Table = await request({
+      url: `/tables/${tableId.value}`,
+      method: 'GET',
+      needAuth: true
+    });
     table.value = data;
     
     if (data.totalExpense) {
       billingAmount.value = data.totalExpense;
     }
     
-    // 检查用户是否已经加入
     const hasJoined = data.guests.some(g => g.userId === user.value?.id);
     if (!hasJoined && data.status === 'VOTING') {
       isJoinModalOpen.value = true;
@@ -158,10 +152,17 @@ async function toggleVote(dishId: string) {
   votingDishId.value = dishId;
   try {
     if (hasVoted(dishId)) {
-      await request.delete(`/tables/${table.value.id}/votes/${dishId}`);
+      await request({
+        url: `/tables/${table.value.id}/votes/${dishId}`,
+        method: 'DELETE',
+        needAuth: true
+      });
     } else {
-      await request.post(`/tables/${table.value.id}/votes`, {
-        dishId
+      await request({
+        url: `/tables/${table.value.id}/votes`,
+        method: 'POST',
+        data: { dishId },
+        needAuth: true
       });
     }
     await fetchTable();
@@ -192,9 +193,14 @@ async function handleJoinTable() {
   loading.value = true;
   joinNameError.value = '';
   try {
-    await request.post(`/tables/${table.value.id}/guests`, {
-      name: nameToUse,
-      preferences: joinForm.value.preferences
+    await request({
+      url: `/tables/${table.value.id}/guests`,
+      method: 'POST',
+      data: {
+        name: nameToUse,
+        preferences: joinForm.value.preferences
+      },
+      needAuth: true
     });
     isJoinModalOpen.value = false;
     isVisitorMode.value = false;
@@ -220,8 +226,11 @@ async function saveBilling() {
   loading.value = true;
   billingError.value = '';
   try {
-    await request.patch(`/tables/${table.value.id}/billing`, {
-      totalExpense: billingAmount.value
+    await request({
+      url: `/tables/${table.value.id}/billing`,
+      method: 'PATCH',
+      data: { totalExpense: billingAmount.value },
+      needAuth: true
     });
     isBillingModalOpen.value = false;
     uni.showToast({ title: '账单已录入', icon: 'success' });
@@ -242,8 +251,11 @@ async function confirmAdvanceStatus(targetStatus: string) {
   
   loading.value = true;
   try {
-    await request.patch(`/tables/${table.value.id}/status`, {
-      status: targetStatus
+    await request({
+      url: `/tables/${table.value.id}/status`,
+      method: 'PATCH',
+      data: { status: targetStatus },
+      needAuth: true
     });
     uni.showToast({ title: '状态已更新', icon: 'success' });
     await fetchTable();
@@ -287,1012 +299,1086 @@ onMounted(() => {
 </script>
 
 <template>
-  <view v-if="table" class="container min-h-screen bg-bg-warm py-6 px-4 animate-fade-in-up">
-    <!-- 顶部导航 -->
-    <view class="flex items-center justify-between mb-6">
-      <button @click="uni.navigateBack({ delta: 1 })" class="p-2 -ml-2 hover-bg-primary-10 rounded-full transition-colors text-primary">
-        <text class="text-xl">←</text>
-      </button>
-      <view class="text-center">
-        <text class="font-bold text-text-dark">{{ table.name }}</text>
+  <view v-if="table" class="page">
+    <!-- 自定义导航栏 -->
+    <view class="custom-nav">
+      <view class="nav-status-bar"></view>
+      <view class="nav-content">
+        <view class="nav-back" @tap="uni.navigateBack({ delta: 1 })">
+          <text class="nav-back-icon">←</text>
+        </view>
+        <text class="nav-title">{{ table.name }}</text>
+        <view class="nav-right"></view>
       </view>
-      <view class="w-8"></view>
     </view>
 
-    <!-- 餐桌信息 -->
-    <view class="chef-card p-6 mb-8">
-      <view class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="space-y-3">
-          <div class="flex items-center gap-4">
-            <text class="serif-title text-3xl font-bold text-text-dark">{{ table.name }}</text>
-            <view 
-              class="px-4 py-1.5 rounded-full text-xs font-bold border transition-all duration-500 shadow-sm"
-              :class="statusConfig[table.status]?.class || 'bg-accent-20 text-text-muted border-primary-20'"
-            >
-              {{ statusConfig[table.status]?.label || '筹备中' }}
-            </view>
-          </div>
-          <div class="flex flex-wrap items-center gap-4 text-sm text-text-muted">
-            <text class="flex items-center gap-1.5">📅 {{ formatDate(table.time) }}</text>
-            <text class="flex items-center gap-1.5">📍 {{ table.location || '翠微居' }}</text>
-          </div>
-        </div>
+    <view class="page-content">
+      <view class="info-card">
+        <view class="info-header">
+          <text class="info-title">{{ table.name }}</text>
+          <view :class="['status-badge', statusConfig[table.status]?.class]">
+            <text class="status-icon">{{ statusConfig[table.status]?.icon }}</text>
+            <text class="status-text">{{ statusConfig[table.status]?.label }}</text>
+          </view>
+        </view>
+        <view class="info-meta">
+          <view class="meta-item">
+            <text class="meta-icon">📅</text>
+            <text class="meta-text">{{ formatDate(table.time) }}</text>
+          </view>
+          <view class="meta-item">
+            <text class="meta-icon">📍</text>
+            <text class="meta-text">{{ table.location || '地点待定' }}</text>
+          </view>
+        </view>
 
-        <!-- 主人控制面板 -->
-        <div v-if="isHost" class="flex flex-wrap gap-3">
+        <view v-if="isHost" class="host-actions">
           <template v-if="table.status === 'PLANNING' || table.status === 'draft'">
-            <button 
-              @click="confirmAdvanceStatus('VOTING')"
-              class="px-6 py-2 bg-primary text-white rounded-custom font-bold text-sm shadow-warm"
-            >
-              开启投票
+            <button class="action-btn primary" @click="confirmAdvanceStatus('VOTING')">
+              <text>开启投票</text>
             </button>
           </template>
           <template v-if="table.status === 'VOTING'">
-            <button 
-              @click="confirmAdvanceStatus('LOCKED')"
-              class="px-6 py-2 bg-success text-white rounded-custom font-bold text-sm shadow-warm"
-            >
-              确认菜单
+            <button class="action-btn success" @click="confirmAdvanceStatus('LOCKED')">
+              <text>确认菜单</text>
             </button>
           </template>
           <template v-if="table.status === 'LOCKED' || table.status === 'confirmed'">
-            <button 
-              @click="confirmAdvanceStatus('ARCHIVED')"
-              class="px-6 py-2 bg-gray-600 text-white rounded-custom font-bold text-sm shadow-warm"
-            >
-              结束饭局
+            <button class="action-btn neutral" @click="confirmAdvanceStatus('ARCHIVED')">
+              <text>结束饭局</text>
             </button>
           </template>
-        </div>
+        </view>
+      </view>
+
+      <view v-if="(table.status === 'VOTING' || table.status === 'voting') && allTimeTopDishes.length > 0" class="top-dishes-card">
+        <view class="card-header">
+          <text class="card-title">🏆 人气风向标</text>
+          <text class="card-subtitle">当前全场最受期待的前三佳肴</text>
+        </view>
+        <view class="top-dishes-list">
+          <view 
+            v-for="(dish, index) in allTimeTopDishes" 
+            :key="dish.id" 
+            class="top-dish-item"
+          >
+            <text class="top-rank" :class="{ 'top-1': index === 0 }">#{{ index + 1 }}</text>
+            <text class="top-name">{{ dish.name }}</text>
+            <view class="top-votes">
+              <text class="votes-count">{{ getVoteCount(dish.id) }}</text>
+              <text class="votes-label">票</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="dishes-section">
+        <view class="section-header">
+          <text class="section-title">候选菜谱</text>
+          <text class="section-subtitle">
+            {{ (table.status === 'PLANNING' || table.status === 'draft') ? '挑选您想为客人准备的精选佳肴' : '客人们正在表达他们的偏好' }}
+          </text>
+        </view>
+
+        <view v-if="table.candidateDishes.length === 0" class="empty-state">
+          <text class="empty-icon">🍽️</text>
+          <text class="empty-title">暂无候选菜品</text>
+        </view>
+
+        <view v-else class="dishes-content">
+          <view v-for="(dishes, cat) in groupedDishes" :key="cat" class="category-group">
+            <view v-if="dishes.length > 0" class="category-header">
+              <text class="category-title">{{ categoryLabels[cat] || cat }}</text>
+            </view>
+
+            <view class="dishes-grid">
+              <view 
+                v-for="dish in dishes" 
+                :key="dish.id" 
+                class="dish-card"
+              >
+                <view class="dish-image-wrapper">
+                  <image 
+                    :src="dish.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600'" 
+                    class="dish-image"
+                    mode="aspectFill"
+                  />
+                  <view class="dish-overlay">
+                    <text class="dish-name">{{ dish.name }}</text>
+                    <view v-if="table.status === 'VOTING' || table.status === 'voting'" class="dish-rank">
+                      <text>分类排名 #{{ getCategoryRank(dish.id, cat) }}</text>
+                    </view>
+                  </view>
+                </view>
+
+                <view class="dish-content">
+                  <view class="dish-actions">
+                    <button 
+                      v-if="(table.status === 'VOTING' || table.status === 'voting') && isGuest"
+                      @click="toggleVote(dish.id)"
+                      :disabled="votingDishId === dish.id"
+                      :class="['vote-btn', { 'voted': hasVoted(dish.id), 'disabled': votingDishId === dish.id }]"
+                    >
+                      <Icons :name="hasVoted(dish.id) ? 'heart' : 'heart-outline'" class="vote-icon" />
+                      <text class="vote-text">{{ hasVoted(dish.id) ? '已想吃' : '我想吃' }}</text>
+                    </button>
+                    <button
+                      v-else-if="(table.status === 'VOTING' || table.status === 'voting') && !isGuest"
+                      disabled
+                      class="vote-btn disabled"
+                    >
+                      <Icons name="heart-outline" class="vote-icon" />
+                      <text class="vote-text">加入后可投票</text>
+                    </button>
+
+                    <view v-if="table.status === 'VOTING' || table.status === 'voting'" class="vote-count">
+                      <Icons name="fire" class="vote-fire" />
+                      <text class="vote-number">{{ getVoteCount(dish.id) }}</text>
+                    </view>
+                  </view>
+
+                  <view v-if="table.status === 'VOTING' || table.status === 'voting'" class="popularity-bar">
+                    <view class="popularity-track">
+                      <view 
+                        class="popularity-fill" 
+                        :style="{ width: `${getPopularityWidth(dish.id)}%` }"
+                      ></view>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="invite-card">
+        <view class="invite-header">
+          <text class="invite-title">邀约好友</text>
+          <text class="invite-subtitle">家宴的快乐源于分享，将饭桌链接发送给好友</text>
+        </view>
+        <view class="invite-link-box">
+          <text class="invite-link">{{ inviteUrl }}</text>
+        </view>
+        <button class="invite-btn" @click="copyLink">
+          <Icons name="copy" class="btn-icon" />
+          <text>复制链接</text>
+        </button>
+      </view>
+
+      <view v-if="table.status === 'LOCKED' || table.status === 'ARCHIVED' || table.status === 'confirmed' || table.status === 'completed'" class="billing-card">
+        <view class="card-header">
+          <text class="card-title">🧾 收支概览</text>
+        </view>
+
+        <view v-if="table.totalExpense" class="billing-content">
+          <view class="billing-row">
+            <text class="billing-label">总支出</text>
+            <text class="billing-value">¥ {{ table.totalExpense.toFixed(2) }}</text>
+          </view>
+          <view class="billing-row">
+            <text class="billing-label">参与人数</text>
+            <text class="billing-value">{{ table.guests.length }} 人</text>
+          </view>
+          <view class="billing-row">
+            <text class="billing-label">人均消费</text>
+            <text class="billing-value highlight">¥ {{ (table.totalExpense / table.guests.length).toFixed(2) }}</text>
+          </view>
+        </view>
+
+        <view v-else class="billing-empty">
+          <text class="empty-text">暂未录入账单</text>
+          <button v-if="isHost" class="action-btn primary" @click="isBillingModalOpen = true">
+            <text>录入账单</text>
+          </button>
+        </view>
       </view>
     </view>
 
-    <!-- 人气风向标 -->
-    <view v-if="(table.status === 'VOTING' || table.status === 'voting') && allTimeTopDishes.length > 0" class="chef-card p-6 mb-8 bg-gradient-to-r from-primary-10 via-accent-30 to-primary-10 border border-primary-10 shadow-warm">
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white shadow-lg shadow-primary-20">
-          <text class="text-xl">🏆</text>
-        </div>
-        <div class="flex-1">
-          <text class="serif-title text-lg font-bold text-text-dark">人气风向标</text>
-          <text class="text-xs text-text-muted">当前全场最受期待的前三佳肴</text>
-        </div>
-      </div>
-      <div class="flex flex-wrap gap-3 mt-4">
-        <div 
-          v-for="(dish, index) in allTimeTopDishes" 
-          :key="dish.id" 
-          class="flex items-center gap-3 bg-white-80 backdrop-blur-sm px-4 py-2 rounded-custom border border-primary-10 shadow-sm"
-        >
-          <text class="text-xl font-black italic" :class="index === 0 ? 'text-primary' : 'text-text-muted'">#{{ index + 1 }}</text>
-          <text class="text-sm font-bold text-text-dark">{{ dish.name }}</text>
-          <text class="text-[10px] bg-primary-10 text-primary px-2 py-0.5 rounded-full font-bold">{{ getVoteCount(dish.id) }} 票</text>
-        </div>
-      </div>
+    <view v-if="isJoinModalOpen" class="modal-overlay" @click="isJoinModalOpen = false">
+      <view class="modal-content" @click.stop>
+        <text class="modal-title">加入饭桌</text>
+        <text class="modal-desc">请输入您的昵称以参与投票</text>
+        
+        <view class="form-field">
+          <text class="form-label">昵称</text>
+          <input
+            v-model="joinForm.name"
+            class="form-input"
+            placeholder="请输入昵称"
+            maxlength="20"
+          />
+          <text v-if="joinNameError" class="form-error">{{ joinNameError }}</text>
+        </view>
+
+        <view class="form-field">
+          <text class="form-label">饮食偏好（可选）</text>
+          <textarea
+            v-model="joinForm.preferences"
+            class="form-textarea"
+            placeholder="例如：不吃辣、素食等"
+            maxlength="100"
+          />
+        </view>
+
+        <view class="modal-actions">
+          <button class="modal-btn secondary" @click="enterVisitorMode">
+            <text>仅浏览</text>
+          </button>
+          <button class="modal-btn primary" @click="handleJoinTable">
+            <text>加入</text>
+          </button>
+        </view>
+      </view>
     </view>
 
-    <!-- 主要内容区 -->
-    <div class="grid grid-cols-1 gap-8">
-      <!-- 左侧：候选菜品 -->
-      <div class="space-y-8">
-        <div class="chef-card p-6">
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <div class="space-y-1">
-              <text class="serif-title text-2xl font-bold text-text-dark">候选菜谱</text>
-              <text class="text-xs text-text-muted">
-                {{ (table.status === 'PLANNING' || table.status === 'draft') ? '挑选您想为客人准备的精选佳肴' : '客人们正在表达他们的偏好' }}
-              </text>
-            </div>
-          </div>
+    <view v-if="isBillingModalOpen" class="modal-overlay" @click="isBillingModalOpen = false">
+      <view class="modal-content" @click.stop>
+        <text class="modal-title">录入账单</text>
+        
+        <view class="form-field">
+          <text class="form-label">总支出（元）</text>
+          <input
+            v-model="billingAmount"
+            type="digit"
+            class="form-input"
+            placeholder="请输入总金额"
+          />
+          <text v-if="billingError" class="form-error">{{ billingError }}</text>
+        </view>
 
-          <div v-if="table.candidateDishes.length === 0" class="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-40">
-            <text class="text-6xl">🍽️</text>
-            <text class="serif-title text-xl italic">暂无候选菜品</text>
-          </div>
-
-          <div v-else class="space-y-12">
-            <div v-for="(dishes, cat) in groupedDishes" :key="cat">
-              <div v-if="dishes.length > 0" class="space-y-6">
-                <div class="flex items-center gap-3">
-                  <div class="h-px flex-1 bg-gradient-to-r from-transparent to-primary-10"></div>
-                  <text class="text-xs font-bold text-primary uppercase tracking-[0.2em] px-4 py-1 bg-primary-5 rounded-full border border-primary-10">
-                    {{ categoryLabels[cat] || cat }}
-                  </text>
-                  <div class="h-px flex-1 bg-gradient-to-l from-transparent to-primary-10"></div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div 
-                    v-for="dish in dishes" 
-                    :key="dish.id" 
-                    class="chef-card group overflow-hidden bg-white-80 border-primary-5 hover-border-primary-20 transition-all duration-500"
-                  >
-                    <div class="h-40 overflow-hidden relative">
-                      <image 
-                        :src="dish.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600'" 
-                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                      />
-                      <div class="absolute inset-0 bg-gradient-to-t from-text-dark-60 via-transparent to-transparent"></div>
-                      <div class="absolute bottom-3 left-4 right-4 flex justify-between items-end">
-                        <div>
-                          <text class="text-white font-bold serif-title text-lg drop-shadow-md block leading-tight">{{ dish.name }}</text>
-                          <text v-if="table.status === 'VOTING' || table.status === 'voting'" class="text-white/60 text-[10px] uppercase tracking-widest font-bold">
-                            分类排名 #{{ getCategoryRank(dish.id, cat) }}
-                          </text>
-                        </div>
-                        <text class="text-white/80 text-[10px] uppercase tracking-widest font-bold bg-black-20 backdrop-blur-md px-2 py-0.5 rounded shadow-sm border border-white-10">{{ categoryLabels[dish.category] || dish.category }}</text>
-                      </div>
-                    </div>
-
-                    <div class="p-4 space-y-4">
-                      <div class="flex justify-between items-center">
-                        <!-- 投票按钮 -->
-                        <button 
-                          v-if="(table.status === 'VOTING' || table.status === 'voting') && isGuest"
-                          @click="toggleVote(dish.id)"
-                          :disabled="votingDishId === dish.id"
-                          :class="[
-                            'flex items-center gap-2 px-5 py-2 rounded-custom text-xs font-bold transition-all duration-500',
-                            hasVoted(dish.id) 
-                              ? 'bg-primary text-white shadow-lg shadow-primary-30 scale-105' 
-                              : 'bg-accent-20 text-primary hover-bg-accent-40 active-scale-90',
-                            votingDishId === dish.id ? 'opacity-70 cursor-not-allowed' : ''
-                          ]"
-                        >
-                          <text>{{ hasVoted(dish.id) ? '❤️' : '🤍' }}</text>
-                          <text>{{ hasVoted(dish.id) ? '已想吃' : '我想吃' }}</text>
-                        </button>
-                        <button
-                          v-else-if="(table.status === 'VOTING' || table.status === 'voting') && !isGuest"
-                          disabled
-                          class="flex items-center gap-2 px-5 py-2 rounded-custom text-xs font-bold bg-primary-10 text-primary-60 cursor-not-allowed"
-                        >
-                          <text>🤍</text>
-                          <text>加入后可投票</text>
-                        </button>
-
-                        <!-- 投票数 -->
-                        <div v-if="table.status === 'VOTING' || table.status === 'voting'" class="flex items-center gap-2">
-                          <text class="text-primary text-lg">🔥</text>
-                          <text class="text-xs font-bold text-text-dark">{{ getVoteCount(dish.id) }}</text>
-                        </div>
-                      </div>
-
-                      <!-- 人气条 -->
-                      <div v-if="table.status === 'VOTING' || table.status === 'voting'" class="space-y-1.5">
-                        <div class="h-1.5 bg-primary-5 rounded-full overflow-hidden">
-                          <div 
-                            class="h-full bg-primary shadow-[0_0_10px_rgba(217,119,6,0.5)] transition-all duration-1000 ease-out" 
-                            :style="{ width: `${getPopularityWidth(dish.id)}%` }"
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 右侧：信息面板 -->
-      <div class="space-y-6">
-        <!-- 邀约好友 -->
-        <div class="chef-card p-6 bg-gradient-to-br from-primary to-text-muted text-white">
-          <div class="space-y-3">
-            <text class="serif-title text-xl font-bold">邀约好友</text>
-            <text class="text-white/70 text-xs">家宴的快乐源于分享。将饭桌链接发送给好友，共同拟定这份期待。</text>
-          </div>
-          <div class="bg-white-10 backdrop-blur-md p-3 rounded-custom border border-white-20 break-all text-[10px] font-mono select-all mt-4">
-            {{ inviteUrl }}
-          </div>
-          <button @click="copyLink" class="w-full bg-white text-primary hover-bg-accent hover-text-text-dark border-none shadow-lg rounded-custom py-3 mt-4 font-bold transition-colors">
-            <text class="flex items-center justify-center gap-2">
-              <text>📋</text>
-              复制链接
-            </text>
+        <view class="modal-actions">
+          <button class="modal-btn secondary" @click="isBillingModalOpen = false">
+            <text>取消</text>
           </button>
-        </div>
-
-        <!-- 账单摘要 -->
-        <div v-if="table.status === 'LOCKED' || table.status === 'ARCHIVED' || table.status === 'confirmed' || table.status === 'completed'" class="chef-card p-6">
-          <div class="flex items-center gap-2 text-text-dark mb-4">
-            <text class="text-xl">🧾</text>
-            <text class="serif-title text-xl font-bold">收支概览</text>
-          </div>
-
-          <div v-if="table.totalExpense" class="space-y-4">
-            <div class="flex justify-between items-center text-sm">
-              <text class="text-text-muted">总支出</text>
-              <text class="text-xl font-bold text-primary serif-title">¥ {{ table.totalExpense.toFixed(2) }}</text>
-            </div>
-            <div class="flex justify-between items-center text-sm">
-              <text class="text-text-muted">参与人数</text>
-              <text class="font-bold text-text-dark">{{ table.guests.length }} 位</text>
-            </div>
-            <div v-if="table.guests.length === 0" class="pt-4 border-t border-primary-5 text-center">
-              <text class="text-sm text-text-muted italic">暂无参与客人，无法计算 AA</text>
-            </div>
-            <div v-else class="pt-4 border-t border-primary-5 flex justify-between items-center">
-              <text class="text-xs font-bold text-text-dark uppercase tracking-widest">人均 AA</text>
-              <div class="text-right">
-                <text class="text-2xl font-bold text-primary serif-title">¥ {{ (table.totalExpense / table.guests.length).toFixed(2) }}</text>
-                <text class="text-[10px] text-text-muted/40 mt-1 italic">自动计算，公开透明</text>
-              </div>
-            </div>
-          </div>
-
-          <div v-else class="text-center py-6 space-y-4">
-            <text class="text-sm text-text-muted/60 italic">主人尚未录入结算金额</text>
-            <button v-if="isHost" @click="isBillingModalOpen = true" class="w-full bg-primary text-white hover-bg-primary-90 py-3 rounded-custom font-bold text-sm transition-colors">
-              录入账单
-            </button>
-          </div>
-        </div>
-
-        <!-- 嘉宾列表 -->
-        <div class="chef-card p-6">
-          <div class="flex items-center justify-between mb-4">
-            <text class="serif-title text-xl font-bold text-text-dark">围炉好友</text>
-            <text class="px-2 py-0.5 bg-primary-10 text-primary text-[10px] font-bold rounded-full">{{ table.guests.length }} 人</text>
-          </div>
-          <div class="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-            <div v-for="guest in table.guests" :key="guest.id" class="flex items-center gap-3 group">
-              <div class="w-10 h-10 rounded-full bg-accent-30 flex items-center justify-center text-primary font-bold border-2 border-white shadow-sm group-hover:scale-110 transition-transform">
-                {{ guest.name.charAt(0) }}
-              </div>
-              <div class="flex-1">
-                <text class="text-sm font-bold text-text-dark flex items-center gap-2">
-                  {{ guest.name }}
-                  <text v-if="guest.userId === table.creatorId" class="text-[9px] font-normal px-1.5 py-0.5 bg-primary-10 text-primary rounded-full">主人</text>
-                </text>
-                <text v-if="guest.preferences" class="text-[10px] text-text-muted/60 italic truncate">{{ guest.preferences }}</text>
-              </div>
-              <div class="flex gap-1">
-                <div v-for="(v, index) in guest.votes" :key="index" class="w-1 h-1 rounded-full bg-primary-40"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 访客模式提示 -->
-    <div
-      v-if="isVisitorMode && !isGuest"
-      class="fixed bottom-0 left-0 right-0 z-50 bg-primary-95 text-white py-3 px-4 flex items-center justify-between shadow-lg"
-    >
-      <text class="text-sm font-bold">访客模式 · 加入后可参与投票</text>
-      <button
-        @click="isJoinModalOpen = true"
-        class="bg-white text-primary hover-bg-accent border-none px-4 py-2 rounded-custom font-bold transition-colors"
-      >
-        加入围炉
-      </button>
-    </div>
-
-    <!-- 加入模态框 -->
-    <uni-popup v-model="isJoinModalOpen" mode="center" class="w-[90%] max-w-md">
-      <div class="chef-card p-6">
-        <text class="serif-title text-xl font-bold text-text-dark mb-4 block text-center">加入围炉</text>
-        <div class="space-y-4">
-          <div class="bg-primary-5 rounded-xl p-4 flex items-start gap-3">
-            <text class="text-primary text-xl shrink-0 mt-0.5">ℹ️</text>
-            <div class="text-sm text-text-muted">
-              <text class="font-bold text-text-dark mb-1 block">加入围炉</text>
-              <text class="text-xs">加入后可对候选菜品投票，表达您的偏好。</text>
-            </div>
-          </div>
-          <div class="space-y-3">
-            <div class="space-y-1.5">
-              <text class="text-[10px] font-bold text-text-dark/60 uppercase tracking-widest">您的昵称</text>
-              <input 
-                v-model="joinForm.name" 
-                type="text" 
-                placeholder="怎么称呼您？" 
-                class="w-full px-4 py-3 rounded-custom border border-primary-10 focus:border-primary-30 outline-none transition-all"
-                maxlength="20"
-                @input="joinNameError = ''"
-              />
-              <text v-if="joinNameError" class="field-error">{{ joinNameError }}</text>
-            </div>
-            <div class="space-y-1.5">
-              <text class="text-[10px] font-bold text-text-dark/60 uppercase tracking-widest">忌口/偏好 (可选)</text>
-              <textarea 
-                v-model="joinForm.preferences" 
-                placeholder="如：不吃香菜、海鲜过敏..." 
-                rows="2"
-                class="w-full px-4 py-3 rounded-custom border border-primary-10 focus:border-primary-30 outline-none transition-all resize-none"
-              ></textarea>
-            </div>
-          </div>
-          <div class="flex flex-col sm:flex-row gap-3 mt-6">
-            <button
-              @click="enterVisitorMode"
-              class="flex-1 px-6 py-3 text-sm font-bold text-text-muted hover-text-text-dark transition-colors border border-primary-10 rounded-custom"
-            >
-              先逛逛
-            </button>
-            <button
-              @click="handleJoinTable"
-              :disabled="!joinForm.name.trim() && !user?.nickname"
-              class="flex-1 px-6 py-3 text-sm font-bold bg-primary text-white hover-bg-primary-90 transition-colors rounded-custom shadow-warm"
-            >
-              {{ loading ? '加入中...' : '加入围炉' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </uni-popup>
-
-    <!-- 账单模态框 -->
-    <uni-popup v-model="isBillingModalOpen" mode="center" class="w-[90%] max-w-md">
-      <div class="chef-card p-6">
-        <text class="serif-title text-xl font-bold text-text-dark mb-4 block text-center">录入饭单结算</text>
-        <div class="space-y-4">
-          <div class="space-y-1.5">
-            <text class="text-xs font-bold text-text-dark/60 uppercase tracking-wider">总支出金额 (元)</text>
-            <input 
-              v-model="billingAmount" 
-              type="number" 
-              step="0.01"
-              placeholder="请输入本次聚餐的总花费" 
-              class="w-full px-4 py-3 rounded-custom border border-primary-10 focus:border-primary-30 outline-none transition-all text-xl font-bold serif-title text-primary"
-              @input="billingError = ''"
-            />
-            <text v-if="billingError" class="field-error">{{ billingError }}</text>
-          </div>
-          <div class="flex gap-3 mt-6">
-            <button
-              @click="isBillingModalOpen = false"
-              class="flex-1 px-6 py-3 text-sm font-bold text-text-dark/40 hover-text-text-dark transition-colors"
-            >
-              取消
-            </button>
-            <button
-              @click="saveBilling"
-              :disabled="!billingAmount || loading"
-              class="flex-1 px-6 py-3 text-sm font-bold bg-primary text-white hover-bg-primary-90 transition-colors rounded-custom shadow-warm"
-            >
-              {{ loading ? '保存中...' : '确认结算' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </uni-popup>
+          <button class="modal-btn primary" @click="saveBilling">
+            <text>保存</text>
+          </button>
+        </view>
+      </view>
+    </view>
   </view>
-  <view v-else class="container min-h-screen bg-bg-warm flex items-center justify-center px-4">
-    <div class="text-center space-y-4">
-      <text class="text-6xl">{{ loadError ? '⚠️' : '⏳' }}</text>
-      <text class="serif-title text-xl font-bold text-text-dark">
-        {{ loadError ? '加载失败' : '加载中...' }}
-      </text>
-      <text v-if="loadError" class="text-sm text-text-muted">{{ loadError }}</text>
-      <button
-        v-if="loadError"
-        @click="fetchTable"
-        class="px-6 py-3 text-sm font-bold bg-primary text-white rounded-custom shadow-warm"
-      >
-        重新加载
-      </button>
-    </div>
+
+  <view v-else-if="loading" class="page loading-page">
+    <text class="loading-icon">⏳</text>
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <view v-else-if="loadError" class="page error-page">
+    <text class="error-icon">❌</text>
+    <text class="error-text">{{ loadError }}</text>
   </view>
 </template>
 
 <style scoped>
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* 自定义导航栏 */
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #DC2626;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.nav-status-bar {
+  height: var(--status-bar-height, 44rpx);
 }
 
-.container {
-  min-height: 100vh;
-  background-color: var(--color-bg-warm);
-}
-
-.py-6 {
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-}
-
-.py-20 {
-  padding-top: 5rem;
-  padding-bottom: 5rem;
-}
-
-.px-4 {
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-
-.px-6 {
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-}
-
-.mb-4 {
-  margin-bottom: 1rem;
-}
-
-.mb-6 {
-  margin-bottom: 1.5rem;
-}
-
-.mb-8 {
-  margin-bottom: 2rem;
-}
-
-.mt-2 {
-  margin-top: 0.5rem;
-}
-
-.mt-4 {
-  margin-top: 1rem;
-}
-
-.mt-6 {
-  margin-top: 1.5rem;
-}
-
-.flex {
+.nav-content {
+  height: 100rpx;
   display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 24rpx 16rpx;
 }
 
-.flex-col {
-  flex-direction: column;
-}
-
-.flex-wrap {
-  flex-wrap: wrap;
-}
-
-.items-center {
+.nav-back {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
   align-items: center;
-}
-
-.items-start {
-  align-items: flex-start;
-}
-
-.justify-center {
   justify-content: center;
 }
 
-.justify-between {
-  justify-content: space-between;
+.nav-back-icon {
+  font-size: 36rpx;
+  color: white;
 }
 
-.gap-2 {
-  gap: 0.5rem;
-}
-
-.gap-3 {
-  gap: 0.75rem;
-}
-
-.gap-4 {
-  gap: 1rem;
-}
-
-.gap-6 {
-  gap: 1.5rem;
-}
-
-.gap-8 {
-  gap: 2rem;
-}
-
-.text-center {
+.nav-title {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: white;
+  flex: 1;
   text-align: center;
+  line-height: 1;
+  padding-bottom: 4rpx;
 }
 
-.text-sm {
-  font-size: 0.875rem;
+.nav-right {
+  width: 60rpx;
 }
 
-.text-xs {
-  font-size: 0.75rem;
+.page {
+  min-height: 100vh;
+  background: #FEF2F2;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
 }
 
-.text-xl {
-  font-size: 1.25rem;
+.page-content {
+  padding: calc(var(--status-bar-height, 44rpx) + 100rpx + 28rpx) 28rpx 40rpx;
 }
 
-.text-2xl {
-  font-size: 1.5rem;
+@media screen and (max-width: 375px) {
+  .page-content {
+    padding: 112rpx 24rpx 32rpx;
+  }
+  
+  .nav-header {
+    margin-bottom: 20rpx;
+  }
+  
+  .info-card {
+    padding: 24rpx;
+    margin-bottom: 20rpx;
+  }
+  
+  .info-title {
+    font-size: 32rpx;
+  }
+  
+  .dishes-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dish-image-wrapper {
+    height: 180rpx;
+  }
 }
 
-.text-3xl {
-  font-size: 1.875rem;
+@media screen and (min-width: 414px) {
+  .page-content {
+    padding: 128rpx 32rpx 48rpx;
+  }
+  
+  .nav-header {
+    margin-bottom: 28rpx;
+  }
+  
+  .info-card {
+    padding: 32rpx;
+    margin-bottom: 28rpx;
+  }
+  
+  .info-title {
+    font-size: 40rpx;
+  }
+  
+  .dishes-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .dish-image-wrapper {
+    height: 220rpx;
+  }
 }
 
-.text-6xl {
-  font-size: 3.75rem;
+@media screen and (min-width: 768px) {
+  .dishes-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-.font-bold {
+.loading-page,
+.error-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 16rpx;
+}
+
+.loading-icon,
+.error-icon {
+  font-size: 80rpx;
+}
+
+.loading-text,
+.error-text {
+  font-size: 28rpx;
+  color: #991B1B;
+}
+
+.nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.nav-btn {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
+  border: 2rpx solid #FECACA;
+  border-radius: 16rpx;
+}
+
+.nav-icon {
+  font-size: 36rpx;
+  color: #DC2626;
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 32rpx;
+  color: #450A0A;
+  font-weight: 600;
+}
+
+.nav-placeholder {
+  width: 72rpx;
+}
+
+.info-card {
+  background: #FFFFFF;
+  border: 2rpx solid #FECACA;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20rpx;
+}
+
+.info-title {
+  font-size: 36rpx;
+  color: #450A0A;
   font-weight: 700;
-}
-
-.font-normal {
-  font-weight: 400;
-}
-
-.font-italic {
-  font-style: italic;
-}
-
-.text-text-dark {
-  color: var(--color-text-dark);
-}
-
-.text-text-muted {
-  color: var(--color-text-muted);
-}
-
-.text-primary {
-  color: var(--color-primary);
-}
-
-.text-white {
-  color: #FFFFFF;
-}
-
-.text-success {
-  color: #10B981;
-}
-
-.text-gray-500 {
-  color: #6B7280;
-}
-
-.bg-bg-warm {
-  background-color: var(--color-bg-warm);
-}
-
-.bg-primary {
-  background-color: var(--color-primary);
-}
-
-.bg-accent {
-  background-color: var(--color-accent);
-}
-
-.bg-white {
-  background-color: #FFFFFF;
-}
-
-.bg-gray-600 {
-  background-color: #4B5563;
-}
-
-.bg-primary-5 {
-    background-color: rgba(217, 119, 6, 0.05);
-  }
-
-  .bg-primary-10 {
-    background-color: rgba(217, 119, 6, 0.1);
-  }
-
-  .bg-primary-20 {
-    background-color: rgba(217, 119, 6, 0.2);
-  }
-
-  .bg-accent-20 {
-    background-color: rgba(253, 230, 138, 0.2);
-  }
-
-  .bg-accent-30 {
-    background-color: rgba(253, 230, 138, 0.3);
-  }
-
-  .bg-success-10 {
-    background-color: rgba(16, 185, 129, 0.1);
-  }
-
-  .bg-black-20 {
-    background-color: rgba(0, 0, 0, 0.2);
-  }
-
-  .bg-white-10 {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .bg-white-80 {
-    background-color: rgba(255, 255, 255, 0.8);
-  }
-
-  .bg-white-90 {
-    background-color: rgba(255, 255, 255, 0.9);
-  }
-
-  .border {
-    border-width: 1px;
-  }
-
-  .border-2 {
-    border-width: 2px;
-  }
-
-  .border-b {
-    border-bottom-width: 1px;
-  }
-
-  .border-primary-10 {
-    border-color: rgba(217, 119, 6, 0.1);
-  }
-
-  .border-primary-20 {
-    border-color: rgba(217, 119, 6, 0.2);
-  }
-
-  .border-primary-30 {
-    border-color: rgba(217, 119, 6, 0.3);
-  }
-
-  .border-success-30 {
-    border-color: rgba(16, 185, 129, 0.3);
-  }
-
-  .border-white {
-    border-color: #FFFFFF;
-  }
-
-  .border-white-10 {
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .border-white-20 {
-    border-color: rgba(255, 255, 255, 0.2);
-  }
-
-  .border-transparent {
-    border-color: transparent;
-  }
-
-.rounded-custom {
-  border-radius: var(--radius-custom);
-}
-
-.rounded-full {
-  border-radius: 9999px;
-}
-
-.rounded-xl {
-  border-radius: 0.75rem;
-}
-
-.shadow-sm {
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-.shadow-lg {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.shadow-warm {
-  box-shadow: var(--shadow-warm);
-}
-
-.relative {
-  position: relative;
-}
-
-.absolute {
-  position: absolute;
-}
-
-.inset-0 {
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-}
-
-.bottom-3 {
-  bottom: 0.75rem;
-}
-
-.left-4 {
-  left: 1rem;
-}
-
-.right-4 {
-  right: 1rem;
-}
-
-.z-50 {
-  z-index: 50;
-}
-
-.w-10 {
-  width: 2.5rem;
-}
-
-.h-10 {
-  height: 2.5rem;
-}
-
-.w-12 {
-  width: 3rem;
-}
-
-.h-12 {
-  height: 3rem;
-}
-
-.w-8 {
-  width: 2rem;
-}
-
-.h-40 {
-  height: 10rem;
-}
-
-.w-full {
-  width: 100%;
-}
-
-.h-full {
-  height: 100%;
-}
-
-.max-w-md {
-  max-width: 28rem;
-}
-
-.max-w-xs {
-  max-width: 20rem;
-}
-
-.overflow-hidden {
-  overflow: hidden;
-}
-
-.overflow-y-auto {
-  overflow-y: auto;
-}
-
-.break-all {
-  word-break: break-all;
-}
-
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.object-cover {
-  object-fit: cover;
-}
-
-.shrink-0 {
-  flex-shrink: 0;
-}
-
-.flex-1 {
   flex: 1;
 }
 
-.scale-105 {
-  transform: scale(1.05);
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 600;
 }
 
-.scale-110 {
-  transform: scale(1.1);
+.status-icon {
+  font-size: 24rpx;
 }
 
-.scale-90 {
-  transform: scale(0.9);
+.status-text {
+  font-size: 22rpx;
 }
 
-.rotate-12 {
-  transform: rotate(12deg);
+.status-plain {
+  background: rgba(220, 38, 38, 0.1);
+  color: #B91C1C;
 }
 
-.-translate-y-1 {
-  transform: translateY(-0.25rem);
+.status-active {
+  background: #DC2626;
+  color: #fff;
 }
 
-.opacity-40 {
-  opacity: 0.4;
+.status-done {
+  background: rgba(22, 163, 74, 0.14);
+  color: #16A34A;
 }
 
-.opacity-60 {
-  opacity: 0.6;
+.info-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
 }
 
-.opacity-70 {
-  opacity: 0.7;
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
 }
 
-.opacity-90 {
-  opacity: 0.9;
+.meta-icon {
+  font-size: 28rpx;
 }
 
-.backdrop-blur-md {
-  backdrop-filter: blur(12px);
+.meta-text {
+  font-size: 26rpx;
+  color: #991B1B;
 }
 
-.backdrop-blur-sm {
-  backdrop-filter: blur(8px);
+.host-actions {
+  display: flex;
+  gap: 12rpx;
 }
 
-.bg-gradient-to-t {
-  background-image: linear-gradient(to top, var(--tw-gradient-stops));
+.action-btn {
+  flex: 1;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
-.bg-gradient-to-br {
-  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+.action-btn::after {
+  border: none;
 }
 
-.bg-gradient-to-r {
-  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+.action-btn.primary {
+  background: #DC2626;
+  color: #fff;
 }
 
-.from-primary {
-  --tw-gradient-from: var(--color-primary);
+.action-btn.success {
+  background: #16A34A;
+  color: #fff;
 }
 
-.from-text-dark-60 {
-  --tw-gradient-from: rgba(67, 20, 7, 0.6);
+.action-btn.neutral {
+  background: #991B1B;
+  color: #fff;
 }
 
-.to-text-muted {
-  --tw-gradient-to: var(--color-text-muted);
-}
-
-.to-transparent {
-  --tw-gradient-to: transparent;
-}
-
-.via-accent-30 {
-  --tw-gradient-via: rgba(253, 230, 138, 0.3);
-}
-
-.via-transparent {
-  --tw-gradient-via: transparent;
-}
-
-.hover-bg-primary-10:hover {
-  background-color: rgba(217, 119, 6, 0.1);
-}
-
-.hover-bg-primary-20:hover {
-  background-color: rgba(217, 119, 6, 0.2);
-}
-
-.hover-bg-primary-90:hover {
-  background-color: rgba(217, 119, 6, 0.9);
-}
-
-.hover-bg-accent:hover {
-  background-color: var(--color-accent);
-}
-
-.hover-bg-accent-40:hover {
-  background-color: rgba(253, 230, 138, 0.4);
-}
-
-.hover-text-primary:hover {
-  color: var(--color-primary);
-}
-
-.hover-text-text-dark:hover {
-  color: var(--color-text-dark);
-}
-
-.hover-text-text-muted:hover {
-  color: var(--color-text-muted);
-}
-
-.hover-border-primary-20:hover {
-  border-color: rgba(217, 119, 6, 0.2);
-}
-
-.hover-scale-110:hover {
-  transform: scale(1.1);
-}
-
-.active-scale-90:active {
-  transform: scale(0.9);
-}
-
-.active-scale-98:active {
+.action-btn:active {
   transform: scale(0.98);
 }
 
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
+.top-dishes-card {
+  background: linear-gradient(135deg, #fffdf9 0%, #fef7ed 100%);
+  border: 2rpx solid rgba(220, 38, 38, 0.3);
+  border-radius: 20rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 6rpx rgba(0, 0, 0, 0.07);
 }
 
-.transition-colors {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
+.card-header {
+  margin-bottom: 20rpx;
 }
 
-.transition-transform {
-  transition-property: transform;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 300ms;
+.card-title {
+  display: block;
+  font-size: 32rpx;
+  color: #450A0A;
+  font-weight: 600;
+  margin-bottom: 8rpx;
 }
 
-.duration-300 {
-  transition-duration: 300ms;
+.card-subtitle {
+  display: block;
+  font-size: 24rpx;
+  color: #991B1B;
 }
 
-.duration-500 {
-  transition-duration: 500ms;
+.top-dishes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
 }
 
-.duration-700 {
-  transition-duration: 700ms;
+.top-dish-item {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 20rpx;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12rpx;
+  gap: 16rpx;
 }
 
-.duration-1000 {
-  transition-duration: 1000ms;
+.top-rank {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #991B1B;
+  min-width: 48rpx;
 }
 
-.ease-out {
-  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+.top-rank.top-1 {
+  color: #DC2626;
 }
 
-.cursor-not-allowed {
-  cursor: not-allowed;
+.top-name {
+  flex: 1;
+  font-size: 26rpx;
+  color: #450A0A;
+  font-weight: 600;
 }
 
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.top-votes {
+  display: flex;
+  align-items: baseline;
+  gap: 4rpx;
 }
 
-.serif-title {
-  font-family: 'Noto Serif SC', serif;
+.votes-count {
+  font-size: 28rpx;
+  color: #DC2626;
+  font-weight: 700;
 }
 
-.chef-card {
-  background-color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(217, 119, 6, 0.1);
-  border-radius: var(--radius-custom);
-  box-shadow: var(--shadow-warm);
-  transition: all 0.3s;
+.votes-label {
+  font-size: 22rpx;
+  color: #991B1B;
 }
 
-/* 响应式布局 */
-.grid {
+.dishes-section {
+  margin-bottom: 24rpx;
+}
+
+.section-header {
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  display: block;
+  font-size: 32rpx;
+  color: #450A0A;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+
+.section-subtitle {
+  display: block;
+  font-size: 24rpx;
+  color: #991B1B;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 32rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #FECACA;
+  border-radius: 20rpx;
+}
+
+.empty-icon {
+  font-size: 80rpx;
+  margin-bottom: 16rpx;
+}
+
+.empty-title {
+  font-size: 28rpx;
+  color: #450A0A;
+  font-weight: 600;
+}
+
+.dishes-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.category-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8rpx;
+}
+
+.category-title {
+  padding: 8rpx 24rpx;
+  background: rgba(220, 38, 38, 0.1);
+  color: #B91C1C;
+  font-size: 24rpx;
+  font-weight: 600;
+  border-radius: 999rpx;
+}
+
+.dishes-grid {
   display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16rpx;
 }
 
-.grid-cols-1 {
-  grid-template-columns: repeat(1, minmax(0, 1fr));
+.dish-card {
+  background: #FFFFFF;
+  border: 2rpx solid #FECACA;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 6rpx rgba(0, 0, 0, 0.07);
 }
 
-.gap-8 {
-  gap: 2rem;
+.dish-image-wrapper {
+  position: relative;
+  height: 200rpx;
 }
 
-.field-error {
+.dish-image {
+  width: 100%;
+  height: 100%;
+}
+
+.dish-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(47, 36, 28, 0.8) 0%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 16rpx;
+}
+
+.dish-name {
+  display: block;
+  font-size: 28rpx;
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 6rpx;
+}
+
+.dish-rank {
+  display: inline-block;
+  padding: 4rpx 12rpx;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dish-content {
+  padding: 16rpx;
+}
+
+.dish-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.vote-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 20rpx;
+  background: rgba(220, 38, 38, 0.12);
+  border: none;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #DC2626;
+  transition: all 0.3s ease;
+}
+
+.vote-btn::after {
+  border: none;
+}
+
+.vote-btn.voted {
+  background: #DC2626;
+  color: #fff;
+}
+
+.vote-btn.disabled {
+  opacity: 0.5;
+}
+
+.vote-icon {
+  font-size: 24rpx;
+}
+
+.vote-text {
+  font-size: 24rpx;
+}
+
+.vote-count {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.vote-fire {
+  font-size: 24rpx;
+}
+
+.vote-number {
+  font-size: 26rpx;
+  color: #450A0A;
+  font-weight: 600;
+}
+
+.popularity-bar {
+  margin-top: 8rpx;
+}
+
+.popularity-track {
+  height: 6rpx;
+  background: rgba(220, 38, 38, 0.12);
+  border-radius: 999rpx;
+  overflow: hidden;
+}
+
+.popularity-fill {
+  height: 100%;
+  background: #DC2626;
+  border-radius: 999rpx;
+  transition: width 1s ease-out;
+}
+
+.invite-card {
+  background: #DC2626;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 4rpx 12rpx rgba(220, 38, 38, 0.3);
+}
+
+.invite-header {
+  margin-bottom: 20rpx;
+}
+
+.invite-title {
+  display: block;
+  font-size: 32rpx;
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+
+.invite-subtitle {
+  display: block;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.invite-link-box {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12rpx;
+  padding: 16rpx;
+  margin-bottom: 16rpx;
+  word-break: break-all;
+}
+
+.invite-link {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: monospace;
+}
+
+.invite-btn {
+  width: 100%;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  background: #fff;
+  border: none;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #DC2626;
+  transition: all 0.3s ease;
+}
+
+.invite-btn::after {
+  border: none;
+}
+
+.invite-btn:active {
+  transform: scale(0.98);
+}
+
+.btn-icon {
+  font-size: 28rpx;
+}
+
+.billing-card {
+  background: #FFFFFF;
+  border: 2rpx solid #FECACA;
+  border-radius: 20rpx;
+  padding: 28rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.billing-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.billing-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #FEE2E2;
+}
+
+.billing-row:last-child {
+  border-bottom: none;
+}
+
+.billing-label {
+  font-size: 26rpx;
+  color: #7F1D1D;
+}
+
+.billing-value {
+  font-size: 28rpx;
+  color: #450A0A;
+  font-weight: 600;
+}
+
+.billing-value.highlight {
+  color: #DC2626;
+  font-size: 32rpx;
+}
+
+.billing-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+  padding: 32rpx;
+}
+
+.empty-text {
+  font-size: 26rpx;
+  color: #7F1D1D;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(47, 36, 28, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 32rpx;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 600rpx;
+  background: #FFFFFF;
+  border-radius: 20rpx;
+  padding: 32rpx;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-title {
+  display: block;
+  font-size: 36rpx;
+  color: #450A0A;
+  font-weight: 700;
+  margin-bottom: 12rpx;
+}
+
+.modal-desc {
+  display: block;
+  font-size: 24rpx;
+  color: #7F1D1D;
+  margin-bottom: 24rpx;
+}
+
+.form-field {
+  margin-bottom: 24rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 26rpx;
+  color: #991B1B;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+}
+
+.form-input {
+  width: 100%;
+  height: 88rpx;
+  padding: 0 24rpx;
+  background: #fff;
+  border: 2rpx solid #FECACA;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  color: #450A0A;
+}
+
+.form-textarea {
+  width: 100%;
+  min-height: 120rpx;
+  padding: 16rpx 24rpx;
+  background: #fff;
+  border: 2rpx solid #FECACA;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  color: #450A0A;
+}
+
+.form-error {
+  display: block;
   margin-top: 8rpx;
   font-size: 22rpx;
   color: #DC2626;
 }
 
-/* 移除了媒体查询相关的类定义，因为它们会导致WXSS编译错误 */
+.modal-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.modal-btn::after {
+  border: none;
+}
+
+.modal-btn.primary {
+  background: #DC2626;
+  color: #fff;
+}
+
+.modal-btn.secondary {
+  background: #FEF2F2;
+  color: #991B1B;
+}
+
+.modal-btn:active {
+  transform: scale(0.98);
+}
 </style>

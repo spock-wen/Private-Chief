@@ -1,6 +1,6 @@
 import { getToken, clearAuth } from '@/utils/storage';
 
-const baseURL = 'http://10.133.233.96:8070/api';
+const baseURL = 'https://chef.wenspock.site/api';
 
 interface RequestOptions {
   url: string;

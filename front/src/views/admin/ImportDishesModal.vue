@@ -23,13 +23,13 @@
             <UploadCloudIcon :size="32" />
           </div>
           <div class="text-center">
-            <p class="font-bold text-text-dark text-lg">点击或拖拽上传 Excel 文件</p>
-            <p class="text-text-muted text-sm mt-1">支持 .xlsx, .xls 格式</p>
+            <p class="font-bold text-text-dark text-lg">点击或拖拽上传 CSV 文件</p>
+            <p class="text-text-muted text-sm mt-1">支持 .csv 格式</p>
           </div>
           <input 
             ref="fileInput"
             type="file" 
-            accept=".xlsx, .xls" 
+            accept=".csv" 
             class="hidden" 
             @change="handleFileChange"
           />
@@ -142,8 +142,8 @@ import { ref, computed } from 'vue';
 import { UploadCloudIcon, FileSpreadsheetIcon, CheckCircleIcon, AlertCircleIcon, InfoIcon } from 'lucide-vue-next';
 import ChefModal from '@/components/ChefModal.vue';
 import ChefButton from '@/components/ChefButton.vue';
-import { generateTemplate, parseExcel } from '@/utils/excel';
-import type { ParsedDish } from '@/utils/excel';
+import { generateTemplate, parseCSV } from '@/utils/csv';
+import type { ParsedDish } from '@/utils/csv';
 import { Category } from '@/types';
 import request from '@/api/request';
 import { useToast } from '@/composables/useToast';
@@ -215,7 +215,7 @@ const handleDrop = async (e: DragEvent) => {
 
 const processFile = async (file: File) => {
   try {
-    parsedData.value = await parseExcel(file);
+    parsedData.value = await parseCSV(file);
     step.value = 'preview';
   } catch (err) {
     console.error(err);

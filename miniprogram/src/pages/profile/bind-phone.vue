@@ -74,12 +74,19 @@ async function handleSubmit() {
 
 <template>
   <view class="page-container">
-    <view class="header-section">
-      <text class="page-title">绑定手机号</text>
-      <text class="page-desc">绑定后可在网页端使用手机号登录</text>
+    <!-- 自定义导航栏 -->
+    <view class="custom-nav">
+      <view class="nav-status-bar"></view>
+      <view class="nav-content">
+        <view class="nav-back" @tap="uni.navigateBack({ delta: 1 })">
+          <text class="nav-back-icon">←</text>
+        </view>
+        <text class="nav-title">绑定手机号</text>
+        <view class="nav-right"></view>
+      </view>
     </view>
 
-    <view class="form-section">
+    <view class="form-section" style="padding-top: 48rpx;">
       <view class="form-card">
         <view class="form-item">
           <text class="form-label">手机号</text>
@@ -145,6 +152,7 @@ async function handleSubmit() {
 .page-container {
   min-height: 100vh;
   background: #FAFAFA;
+  padding-top: calc(var(--status-bar-height, 44rpx) + 100rpx);
 }
 
 .header-section {

@@ -2,12 +2,14 @@
 import { ref, reactive } from 'vue';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useFamilyStore } from '@/stores/useFamilyStore';
+import Icons from '@/components/Icons.vue';
 
 const authStore = useAuthStore();
 const familyStore = useFamilyStore();
 const loading = ref(false);
 const emailError = ref('');
 const passwordError = ref('');
+const showPassword = ref(false);
 const emailForm = reactive({
   email: '',
   password: ''
@@ -133,11 +135,22 @@ function handleForgotPassword() {
 
 <template>
   <view class="mp-page login-page">
+    <!-- 自定义导航栏 -->
+    <view class="custom-nav">
+      <view class="nav-status-bar"></view>
+      <view class="nav-content">
+        <text class="nav-title">登录</text>
+        <view class="nav-right"></view>
+      </view>
+    </view>
+
     <view class="mp-shell">
-      <view class="mp-header">
-        <text class="brand-mark">SpockChef 私厨</text>
-        <text class="mp-title">欢迎回来</text>
-        <text class="mp-subtitle">登录后即可继续家庭聚餐与菜单管理。</text>
+      <view class="hero-section">
+        <view class="brand-badge">
+          <text class="badge-text">SpockChef</text>
+        </view>
+        <text class="hero-title">欢迎回来</text>
+        <text class="hero-subtitle">登录后即可继续家庭聚餐与菜单管理</text>
       </view>
 
       <view class="mp-card login-card">
@@ -158,13 +171,21 @@ function handleForgotPassword() {
             <text class="mp-label">密码</text>
             <text class="text-link" @click="handleForgotPassword">忘记密码？</text>
           </view>
-          <input
-            v-model="emailForm.password"
-            type="password"
-            placeholder="请输入密码"
-            class="mp-input"
-            @input="passwordError = ''"
-          />
+          <view class="password-input-row">
+            <input
+              v-model="emailForm.password"
+              :password="!showPassword"
+              placeholder="请输入密码"
+              class="mp-input"
+              @input="passwordError = ''"
+            />
+            <view
+              class="eye-btn"
+              @click="showPassword = !showPassword"
+            >
+              <Icons :name="showPassword ? 'eye' : 'eye-off'" class="eye-icon" />
+            </view>
+          </view>
           <text v-if="passwordError" class="mp-helper-text">{{ passwordError }}</text>
         </view>
 
@@ -211,6 +232,10 @@ function handleForgotPassword() {
 <style scoped>
 .login-page {
   position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  background: #FEF2F2;
 }
 
 .login-page::before {
@@ -221,22 +246,58 @@ function handleForgotPassword() {
   width: 420rpx;
   height: 420rpx;
   border-radius: 50%;
-  background: rgba(154, 91, 51, 0.08);
+  background: #DC2626;
+  opacity: 0.08;
 }
 
-.brand-mark {
+.mp-shell {
+  width: 100%;
+  padding: 80rpx 28rpx 60rpx;
+  max-width: 750rpx;
+}
+
+.hero-section {
+  margin-bottom: 64rpx;
+}
+
+.brand-badge {
   display: inline-block;
-  padding: 8rpx 22rpx;
-  margin-bottom: 18rpx;
+  padding: 8rpx 24rpx;
+  margin-bottom: 24rpx;
   border-radius: 999rpx;
-  background: rgba(154, 91, 51, 0.12);
-  color: var(--brand-600);
-  font-size: 22rpx;
+  background: #DC2626;
+  box-shadow: 0 4rpx 6rpx rgba(0, 0, 0, 0.07);
+}
+
+.badge-text {
+  color: #fff;
+  font-size: 24rpx;
   font-weight: 600;
+  letter-spacing: 0.5rpx;
+}
+
+.hero-title {
+  display: block;
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #450A0A;
+  margin-bottom: 16rpx;
+  line-height: 1.3;
+}
+
+.hero-subtitle {
+  display: block;
+  font-size: 28rpx;
+  color: #7F1D1D;
+  line-height: 1.6;
 }
 
 .login-card {
-  padding: 36rpx;
+  padding: 48rpx;
+  margin-bottom: 48rpx;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  box-shadow: 0 10rpx 15rpx rgba(0, 0, 0, 0.1);
 }
 
 .label-row {
@@ -246,47 +307,60 @@ function handleForgotPassword() {
 }
 
 .register-line {
-  margin-top: 20rpx;
+  margin-top: 24rpx;
   text-align: center;
-  font-size: 26rpx;
+  font-size: 24rpx;
 }
 
 .muted {
-  color: var(--text-500);
+  color: #991B1B;
 }
 
 .text-link {
-  color: var(--brand-500);
+  color: #DC2626;
   font-weight: 600;
   margin-left: 8rpx;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.text-link:active {
+  color: #B91C1C;
 }
 
 .divider {
-  margin: 28rpx 0;
+  margin: 32rpx 0;
   display: flex;
   align-items: center;
-  gap: 18rpx;
+  gap: 16rpx;
 }
 
 .divider-line {
   flex: 1;
   height: 2rpx;
-  background: var(--border-200);
+  background: #FECACA;
 }
 
 .divider-text {
   font-size: 24rpx;
-  color: var(--text-500);
+  color: #991B1B;
 }
 
 .wechat-btn {
-  height: 88rpx;
-  background: #fff;
-  border: 2rpx solid #7ecf9d;
-  border-radius: var(--radius-pill);
+  height: 92rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #FECACA;
+  border-radius: 16rpx;
   font-size: 28rpx;
   font-weight: 600;
-  color: #07C160;
+  color: #450A0A;
+  transition: all 150ms ease;
+}
+
+.wechat-btn:active {
+  background: #FEF2F2;
+  border-color: #DC2626;
+  color: #DC2626;
 }
 
 .wechat-btn::after {
@@ -294,8 +368,102 @@ function handleForgotPassword() {
 }
 
 .agreement-section {
-  margin-top: 30rpx;
+  margin-top: 48rpx;
   text-align: center;
   font-size: 24rpx;
+  line-height: 1.8;
+}
+
+.password-input-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.eye-btn {
+  position: absolute;
+  right: 24rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 32rpx;
+  padding: 0;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.eye-btn::after {
+  border: none;
+}
+
+.eye-icon {
+  font-size: 32rpx;
+}
+
+.mp-primary-btn {
+  width: 100%;
+  height: 92rpx;
+  background: #DC2626;
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 600;
+  border: none;
+  border-radius: 16rpx;
+  margin-top: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mp-primary-btn::after {
+  border: none;
+}
+
+.mp-primary-btn[disabled] {
+  opacity: 0.6;
+}
+
+/* 响应式调整 */
+@media screen and (max-width: 375px) {
+  .mp-shell {
+    padding: 60rpx 24rpx 50rpx;
+  }
+  
+  .hero-section {
+    margin-bottom: 48rpx;
+  }
+  
+  .hero-title {
+    font-size: 48rpx;
+  }
+  
+  .login-card {
+    padding: 32rpx;
+    margin-bottom: 32rpx;
+  }
+}
+
+@media screen and (min-width: 414px) {
+  .mp-shell {
+    padding: 100rpx 32rpx 70rpx;
+  }
+  
+  .hero-section {
+    margin-bottom: 96rpx;
+  }
+  
+  .hero-title {
+    font-size: 64rpx;
+  }
+  
+  .login-card {
+    padding: 64rpx;
+    margin-bottom: 64rpx;
+  }
 }
 </style>

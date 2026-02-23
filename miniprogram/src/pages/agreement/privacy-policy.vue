@@ -3,9 +3,20 @@
 
 <template>
   <view class="container">
+    <!-- 自定义导航栏 -->
+    <view class="custom-nav">
+      <view class="nav-status-bar"></view>
+      <view class="nav-content">
+        <view class="nav-back" @tap="uni.navigateBack({ delta: 1 })">
+          <text class="nav-back-icon">←</text>
+        </view>
+        <text class="nav-title">隐私政策</text>
+        <view class="nav-right"></view>
+      </view>
+    </view>
+
     <scroll-view class="content" scroll-y="true">
       <view class="section">
-        <text class="title">隐私政策</text>
         <text class="update-date">更新日期：2026年2月18日</text>
       </view>
 
@@ -100,14 +111,71 @@
 </template>
 
 <style scoped>
+/* 自定义导航栏 */
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #DC2626;
+}
+
+.nav-status-bar {
+  height: var(--status-bar-height, 44rpx);
+}
+
+.nav-content {
+  height: 100rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 24rpx 16rpx;
+  position: relative;
+}
+
+.nav-back {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  left: 24rpx;
+  bottom: 16rpx;
+}
+
+.nav-back-icon {
+  font-size: 36rpx;
+  color: white;
+}
+
+.nav-title {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: white;
+  text-align: center;
+  line-height: 1;
+  padding-bottom: 4rpx;
+}
+
+.nav-right {
+  width: 60rpx;
+  position: absolute;
+  right: 24rpx;
+  bottom: 16rpx;
+}
+
 .container {
   min-height: 100vh;
   background: white;
-  padding: 30rpx;
+  padding-top: calc(var(--status-bar-height, 44rpx) + 100rpx);
 }
 
 .content {
-  height: 100vh;
+  height: calc(100vh - var(--status-bar-height, 44rpx) - 100rpx);
+  padding: 32rpx;
+  box-sizing: border-box;
 }
 
 .section {

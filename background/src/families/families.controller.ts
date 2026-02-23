@@ -69,12 +69,13 @@ export class FamiliesController {
   /**
    * 生成邀请码
    */
-  @Post('invitations')
+  @Post(':id/invitations')
   createInvitation(
+    @Param('id') id: string,
     @Body() createInvitationDto: CreateInvitationDto,
     @CurrentUser() user: any,
   ) {
-    return this.familiesService.createInvitation(createInvitationDto, user.id);
+    return this.familiesService.createInvitation(id, createInvitationDto, user.id);
   }
 
   /**

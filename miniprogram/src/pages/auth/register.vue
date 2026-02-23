@@ -2,6 +2,7 @@
 import { ref, reactive, computed, watch } from 'vue';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useFamilyStore } from '@/stores/useFamilyStore';
+import Icons from '@/components/Icons.vue';
 
 const authStore = useAuthStore();
 const familyStore = useFamilyStore();
@@ -186,19 +187,29 @@ function handleLogin() {
 
 <template>
   <view class="register-page">
-    <view class="register-content">
-      <!-- Logo 和标题 -->
+    <!-- 自定义导航栏 -->
+    <view class="custom-nav">
+      <view class="nav-status-bar"></view>
+      <view class="nav-content">
+        <view class="nav-back" @tap="uni.navigateBack({ delta: 1 })">
+          <text class="nav-back-icon">←</text>
+        </view>
+        <text class="nav-title">注册</text>
+        <view class="nav-right"></view>
+      </view>
+    </view>
+
+    <view class="page-content">
       <view class="brand-section">
-        <text class="brand-name serif-title">SpockChef <text class="brand-accent">私厨</text></text>
-        <text class="brand-tagline">创建账号，开启您的私厨之旅</text>
+        <view class="brand-badge">
+          <text class="badge-text">SpockChef</text>
+        </view>
+        <text class="brand-title">创建账号</text>
+        <text class="brand-subtitle">开启您的私厨之旅</text>
       </view>
 
-      <!-- 注册卡片 -->
       <view class="register-card">
-        <text class="card-title">注册</text>
-
         <view class="form-section">
-          <!-- 1. 邮箱 -->
           <view class="form-item">
             <text class="form-label">邮箱</text>
             <input
@@ -211,7 +222,6 @@ function handleLogin() {
             <text v-if="fieldErrors.email" class="error-text">{{ fieldErrors.email }}</text>
           </view>
 
-          <!-- 2. 邮箱验证码 -->
           <view class="form-item">
             <text class="form-label">邮箱验证码</text>
             <view class="code-input-row">
@@ -232,29 +242,28 @@ function handleLogin() {
               </button>
             </view>
             <text v-if="!form.emailCode" class="hint-text">验证码将发送到您的邮箱，5 分钟内有效</text>
-            <text v-else-if="/^\d{6}$/.test(form.emailCode)" class="success-text">✓ 验证码已填写</text>
-            <text v-else-if="form.emailCode" class="error-text">✗ 验证码应为6位数字</text>
+            <text v-else-if="/^\d{6}$/.test(form.emailCode)" class="success-text">验证码已填写</text>
+            <text v-else-if="form.emailCode" class="error-text">验证码应为6位数字</text>
             <text v-if="fieldErrors.emailCode" class="error-text">{{ fieldErrors.emailCode }}</text>
           </view>
 
-          <!-- 3. 密码 -->
           <view class="form-item">
             <text class="form-label">密码</text>
             <view class="password-input-row">
-              <input
-                v-model="form.password"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="至少6位字符，建议包含字母和数字"
-                class="form-input"
-                :class="{ 'error': fieldErrors.password }"
-              />
-              <button
-                class="eye-btn"
-                @click="showPassword = !showPassword"
-              >
-                {{ showPassword ? '👁️‍🗨️' : '👁️' }}
-              </button>
+            <input
+              v-model="form.password"
+              :password="!showPassword"
+              placeholder="至少6位字符，建议包含字母和数字"
+              class="form-input"
+              :class="{ 'error': fieldErrors.password }"
+            />
+            <view
+              class="eye-btn"
+              @click="showPassword = !showPassword"
+            >
+              <Icons :name="showPassword ? 'eye' : 'eye-off'" class="eye-icon" />
             </view>
+          </view>
             <view class="password-hints">
               <text :class="form.password.length >= 6 ? 'hint-success' : 'hint-text'">
                 {{ form.password.length >= 6 ? '✓' : '○' }} 至少6位字符
@@ -266,34 +275,32 @@ function handleLogin() {
             <text v-if="fieldErrors.password" class="error-text">{{ fieldErrors.password }}</text>
           </view>
 
-          <!-- 4. 确认密码 -->
           <view class="form-item">
             <text class="form-label">确认密码</text>
             <view class="password-input-row">
               <input
                 v-model="confirmPassword"
-                :type="showConfirmPassword ? 'text' : 'password'"
+                :password="!showConfirmPassword"
                 placeholder="请再次输入密码"
                 class="form-input"
                 :class="{ 'error': fieldErrors.confirmPassword }"
               />
-              <button
+              <view
                 class="eye-btn"
                 @click="showConfirmPassword = !showConfirmPassword"
               >
-                {{ showConfirmPassword ? '👁️‍🗨️' : '👁️' }}
-              </button>
+                <Icons :name="showConfirmPassword ? 'eye' : 'eye-off'" class="eye-icon" />
+              </view>
             </view>
             <text v-if="confirmPassword && form.password !== confirmPassword" class="error-text">
-              ✗ 两次输入的密码不一致
+              两次输入的密码不一致
             </text>
             <text v-else-if="confirmPassword && form.password === confirmPassword" class="success-text">
-              ✓ 密码一致
+              密码一致
             </text>
             <text v-if="fieldErrors.confirmPassword" class="error-text">{{ fieldErrors.confirmPassword }}</text>
           </view>
 
-          <!-- 5. 昵称 -->
           <view class="form-item">
             <text class="form-label">昵称</text>
             <input
@@ -306,13 +313,12 @@ function handleLogin() {
             <text v-if="fieldErrors.nickname" class="error-text">{{ fieldErrors.nickname }}</text>
           </view>
 
-          <!-- 服务条款 -->
           <view class="terms-row">
-            <input
-              v-model="agreedToTerms"
-              type="checkbox"
-              class="terms-checkbox"
-            />
+            <view class="checkbox-wrapper" @click="agreedToTerms = !agreedToTerms">
+              <view class="checkbox" :class="{ 'checked': agreedToTerms }">
+                <text v-if="agreedToTerms" class="checkbox-icon">✓</text>
+              </view>
+            </view>
             <text class="terms-text">
               我已阅读并同意
               <text class="terms-link" @click="uni.navigateTo({ url: '/pages/agreement/user-agreement' })">服务条款</text>
@@ -344,13 +350,13 @@ function handleLogin() {
 <style scoped>
 .register-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, rgba(254, 243, 243, 0.8) 0%, rgba(255, 255, 255, 0.9) 100%);
+  background: #FEF2F2;
   display: flex;
   flex-direction: column;
-  padding: 60rpx 48rpx 60rpx;
+  padding: calc(var(--status-bar-height, 44rpx) + 100rpx) 24rpx 48rpx;
 }
 
-.register-content {
+.page-content {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -365,43 +371,49 @@ function handleLogin() {
   gap: 16rpx;
 }
 
-.brand-name {
+.brand-badge {
+  display: inline-block;
+  padding: 8rpx 24rpx;
+  margin-bottom: 16rpx;
+  border-radius: 999rpx;
+  background: #DC2626;
+  box-shadow: 0 4rpx 6rpx rgba(0, 0, 0, 0.07);
+}
+
+.badge-text {
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+}
+
+.brand-title {
   font-size: 56rpx;
   font-weight: 700;
   color: #450A0A;
-  line-height: 1.2;
+  line-height: 1.3;
 }
 
-.brand-accent {
-  color: #DC2626;
-}
-
-.brand-tagline {
-  font-size: 26rpx;
-  color: #991B1B;
-  opacity: 0.7;
-  max-width: 600rpx;
-  line-height: 1.4;
-}
-
-.serif-title {
-  font-family: 'Georgia', serif;
+.brand-subtitle {
+  font-size: 28rpx;
+  color: #7F1D1D;
+  line-height: 1.6;
 }
 
 .register-card {
   width: 100%;
   max-width: 640rpx;
   background: #FFFFFF;
-  border-radius: 32rpx;
+  border-radius: 24rpx;
   padding: 48rpx;
-  box-shadow: 0 8rpx 40rpx rgba(69, 10, 10, 0.08);
+  box-shadow: 0 10rpx 15rpx rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   gap: 32rpx;
 }
 
 .card-title {
-  font-size: 36rpx;
+  font-size: 40rpx;
   font-weight: 700;
   color: #450A0A;
   text-align: center;
@@ -416,7 +428,7 @@ function handleLogin() {
 .form-item {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: 8rpx;
 }
 
 .form-label {
@@ -427,22 +439,23 @@ function handleLogin() {
 
 .form-input {
   width: 100%;
-  height: 96rpx;
-  padding: 0 32rpx;
-  border: 2rpx solid rgba(220, 38, 38, 0.1);
-  border-radius: 24rpx;
+  height: 92rpx;
+  padding: 0 24rpx;
+  border: 2rpx solid #FECACA;
+  border-radius: 16rpx;
   font-size: 28rpx;
   color: #450A0A;
-  background: #FAFAFA;
+  background: #FFFFFF;
+  transition: all 150ms ease;
 }
 
 .form-input:focus {
-  border-color: rgba(220, 38, 38, 0.3);
-  background: #FFFFFF;
+  border-color: #DC2626;
+  background: #fff;
 }
 
 .form-input.error {
-  border-color: #EF4444;
+  border-color: #DC2626;
 }
 
 .code-input-row {
@@ -456,14 +469,20 @@ function handleLogin() {
 }
 
 .code-btn {
-  padding: 0 32rpx;
-  height: 96rpx;
-  border: 2rpx solid rgba(220, 38, 38, 0.2);
-  border-radius: 24rpx;
+  padding: 0 24rpx;
+  height: 92rpx;
+  border: 2rpx solid #FECACA;
+  border-radius: 16rpx;
   background: #FFFFFF;
   color: #DC2626;
-  font-size: 28rpx;
+  font-size: 24rpx;
   font-weight: 600;
+  transition: all 150ms ease;
+}
+
+.code-btn:active {
+  background: #DC2626;
+  color: #fff;
 }
 
 .code-btn::after {
@@ -483,12 +502,14 @@ function handleLogin() {
 
 .eye-btn {
   position: absolute;
-  right: 32rpx;
+  right: 24rpx;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
-  font-size: 32rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+  color: #991B1B;
   padding: 0;
 }
 
@@ -504,25 +525,24 @@ function handleLogin() {
 }
 
 .hint-text {
-  font-size: 24rpx;
+  font-size: 20rpx;
   color: #991B1B;
-  opacity: 0.7;
 }
 
 .hint-success {
-  font-size: 24rpx;
-  color: #10B981;
+  font-size: 20rpx;
+  color: #16A34A;
 }
 
 .success-text {
-  font-size: 24rpx;
-  color: #10B981;
+  font-size: 20rpx;
+  color: #16A34A;
   margin-top: 4rpx;
 }
 
 .error-text {
-  font-size: 24rpx;
-  color: #EF4444;
+  font-size: 20rpx;
+  color: #DC2626;
   margin-top: 4rpx;
 }
 
@@ -533,35 +553,62 @@ function handleLogin() {
   margin-top: 8rpx;
 }
 
-.terms-checkbox {
+.checkbox-wrapper {
   margin-top: 8rpx;
-  transform: scale(1.2);
+  cursor: pointer;
+}
+
+.checkbox {
+  width: 32rpx;
+  height: 32rpx;
+  border: 2rpx solid #FECACA;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+}
+
+.checkbox.checked {
+  background: #DC2626;
+  border-color: #DC2626;
+}
+
+.checkbox-icon {
+  color: #fff;
+  font-size: 20rpx;
+  font-weight: bold;
 }
 
 .terms-text {
   flex: 1;
   font-size: 24rpx;
   color: #991B1B;
-  opacity: 0.7;
   line-height: 1.4;
 }
 
 .terms-link {
   color: #DC2626;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .primary-btn {
   width: 100%;
   height: 104rpx;
-  background: linear-gradient(135deg, #DC2626 0%, #F87171 100%);
-  border-radius: 24rpx;
+  background: #DC2626;
+  border-radius: 16rpx;
   border: none;
   font-size: 32rpx;
   font-weight: 600;
-  color: #FFFFFF;
-  box-shadow: 0 8rpx 32rpx rgba(220, 38, 38, 0.3);
+  color: #fff;
+  box-shadow: 0 4rpx 6rpx rgba(0, 0, 0, 0.07);
   margin-top: 16rpx;
+  transition: all 150ms ease;
+}
+
+.primary-btn:active {
+  background: #B91C1C;
+  transform: scale(0.98);
 }
 
 .primary-btn::after {
@@ -575,22 +622,45 @@ function handleLogin() {
 
 .login-link {
   text-align: center;
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #991B1B;
-  opacity: 0.7;
   margin-top: 16rpx;
 }
 
 .link-text {
   color: #DC2626;
-  font-weight: 500;
-  margin-left: 8rpx;
+  font-weight: 600;
 }
 
-.hint-text {
-  font-size: 24rpx;
-  color: #991B1B;
-  opacity: 0.7;
-  margin-top: 4rpx;
+@media screen and (max-width: 375px) {
+  .register-page {
+    padding: 0 16rpx 32rpx;
+  }
+  
+  .brand-title {
+    font-size: 48rpx;
+  }
+  
+  .register-card {
+    padding: 32rpx;
+  }
+  
+  .primary-btn {
+    height: 92rpx;
+  }
+}
+
+@media screen and (min-width: 414px) {
+  .register-page {
+    padding: 0 32rpx 64rpx;
+  }
+  
+  .brand-title {
+    font-size: 64rpx;
+  }
+  
+  .register-card {
+    padding: 64rpx;
+  }
 }
 </style>

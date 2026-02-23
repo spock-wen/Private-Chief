@@ -236,7 +236,7 @@ import type { Dish } from '@/types';
 import { Category } from '@/types';
 import { useToast } from '@/composables/useToast';
 import { useFamilyStore } from '@/stores/useFamilyStore';
-import { exportDishes } from '@/utils/excel';
+import { exportDishes } from '@/utils/csv';
 
 const toast = useToast();
 const familyStore = useFamilyStore();

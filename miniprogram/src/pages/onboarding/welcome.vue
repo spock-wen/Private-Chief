@@ -69,10 +69,17 @@ async function handleJoinFamily() {
 
 <template>
   <view class="mp-page">
+    <!-- 自定义导航栏 -->
+    <view class="custom-nav">
+      <view class="nav-status-bar"></view>
+      <view class="nav-content">
+        <view class="nav-title">创建或加入家庭</view>
+        <view class="nav-right"></view>
+      </view>
+    </view>
+
     <view class="mp-shell">
       <view class="mp-header">
-        <text class="welcome-mark">初次设置</text>
-        <text class="mp-title">创建或加入家庭</text>
         <text class="mp-subtitle">完成这一步后，即可开始发起饭桌和管理菜单。</text>
       </view>
 
@@ -142,8 +149,8 @@ async function handleJoinFamily() {
   display: inline-block;
   padding: 8rpx 20rpx;
   border-radius: 999rpx;
-  background: rgba(154, 91, 51, 0.12);
-  color: var(--brand-600);
+  background: rgba(220, 38, 38, 0.1);
+  color: #B91C1C;
   font-size: 22rpx;
   font-weight: 600;
   margin-bottom: 18rpx;
@@ -151,7 +158,7 @@ async function handleJoinFamily() {
 
 .mode-switch {
   display: flex;
-  background: var(--bg-soft);
+  background: #FEF2F2;
   border-radius: 16rpx;
   padding: 8rpx;
   margin-bottom: 22rpx;
@@ -162,35 +169,35 @@ async function handleJoinFamily() {
   text-align: center;
   padding: 16rpx 0;
   font-size: 26rpx;
-  color: var(--text-700);
+  color: #450A0A;
   border-radius: 12rpx;
 }
 
 .mode-item.active {
   background: #fff;
-  color: var(--brand-500);
+  color: #DC2626;
   font-weight: 600;
 }
 
 .tips {
   margin-top: 26rpx;
   padding: 36rpx;
-  border-radius: var(--radius-lg);
-  background: var(--bg-soft);
+  border-radius: 16rpx;
+  background: #FEF2F2;
 }
 
 .tip-title {
   display: block;
   margin-bottom: 10rpx;
   font-size: 24rpx;
-  color: var(--text-700);
+  color: #450A0A;
   font-weight: 600;
 }
 
 .tip-line {
   display: block;
   font-size: 24rpx;
-  color: var(--text-500);
+  color: #991B1B;
   line-height: 1.6;
 }
 </style>

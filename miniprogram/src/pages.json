@@ -11,16 +11,14 @@
       "path": "pages/table/detail",
       "style": {
         "navigationBarTitleText": "饭桌详情",
-        "navigationBarBackgroundColor": "#D97706",
-        "navigationBarTextStyle": "white"
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/menu/index",
       "style": {
         "navigationBarTitleText": "菜单",
-        "navigationBarBackgroundColor": "#D97706",
-        "navigationBarTextStyle": "white"
+        "navigationStyle": "custom"
       }
     },
     {
@@ -41,8 +39,7 @@
       "path": "pages/profile/bind-wechat",
       "style": {
         "navigationBarTitleText": "绑定微信",
-        "navigationBarBackgroundColor": "#D97706",
-        "navigationBarTextStyle": "white"
+        "navigationStyle": "custom"
       }
     },
     {
@@ -63,16 +60,14 @@
       "path": "pages/onboarding/welcome",
       "style": {
         "navigationBarTitleText": "欢迎",
-        "navigationBarBackgroundColor": "#D97706",
-        "navigationBarTextStyle": "white"
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/family/settings",
       "style": {
         "navigationBarTitleText": "家庭设置",
-        "navigationBarBackgroundColor": "#D97706",
-        "navigationBarTextStyle": "white"
+        "navigationStyle": "custom"
       }
     },
     {
@@ -86,44 +81,50 @@
       "path": "pages/agreement/user-agreement",
       "style": {
         "navigationBarTitleText": "用户协议",
-        "navigationBarBackgroundColor": "#D97706",
-        "navigationBarTextStyle": "white"
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/agreement/privacy-policy",
       "style": {
         "navigationBarTitleText": "隐私政策",
-        "navigationBarBackgroundColor": "#D97706",
-        "navigationBarTextStyle": "white"
+        "navigationStyle": "custom"
       }
     }
   ],
   "tabBar": {
-    "color": "#92400E",
-    "selectedColor": "#D97706",
+    "color": "#991B1B",
+    "selectedColor": "#DC2626",
     "backgroundColor": "#FFFFFF",
     "borderStyle": "black",
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "饭桌"
+        "text": "饭桌",
+        "iconPath": "static/tabbar/table.png",
+        "selectedIconPath": "static/tabbar/table-active.png"
       },
       {
         "pagePath": "pages/menu/index",
-        "text": "菜单"
+        "text": "菜单",
+        "iconPath": "static/tabbar/menu.png",
+        "selectedIconPath": "static/tabbar/menu-active.png"
       },
       {
         "pagePath": "pages/profile/index",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "static/tabbar/profile.png",
+        "selectedIconPath": "static/tabbar/profile-active.png"
       }
     ]
   },
   "globalStyle": {
     "navigationBarTextStyle": "white",
     "navigationBarTitleText": "私厨助手",
-    "navigationBarBackgroundColor": "#D97706",
-    "backgroundColor": "#FFFBF0"
+    "navigationBarBackgroundColor": "#DC2626",
+    "backgroundColor": "#FEF2F2",
+    "animationType": "slide-in-right",
+    "animationDuration": 200
   },
   "uniIdRouter": {}
 }

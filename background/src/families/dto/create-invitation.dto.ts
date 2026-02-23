@@ -1,9 +1,6 @@
-import { IsString, IsInt, IsOptional, Min } from 'class-validator';
+import { IsInt, IsOptional, Min } from 'class-validator';
 
 export class CreateInvitationDto {
-  @IsString()
-  familyId: string;
-
   @IsInt()
   @IsOptional()
   @Min(-1)

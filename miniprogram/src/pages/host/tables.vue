@@ -156,35 +156,53 @@ function getStatusConfig(status: string) {
 
 <template>
   <view class="mp-page">
-    <view class="mp-shell">
-      <view class="header-row">
-        <view class="mp-header">
-          <text class="mp-title">我的饭桌</text>
-          <text class="mp-subtitle">集中管理聚餐进度，快速进入详情继续操作。</text>
+    <!-- 自定义导航栏 -->
+    <view class="custom-nav">
+      <view class="nav-status-bar"></view>
+      <view class="nav-content">
+        <view class="nav-back" @tap="uni.navigateBack({ delta: 1 })">
+          <text class="nav-back-icon">←</text>
         </view>
-        <button class="mp-primary-btn add-btn" @click="openCreateModal">发起聚餐</button>
+        <text class="nav-title">我的饭桌</text>
+        <view class="nav-right"></view>
+      </view>
+    </view>
+
+    <view class="mp-shell">
+      <!-- 页面头部 -->
+      <view class="page-header">
+        <text class="header-subtitle">集中管理聚餐进度，快速进入详情继续操作。</text>
+        <button class="create-btn" @click="openCreateModal">
+          <text class="btn-icon">+</text>
+          <text class="btn-text">发起聚餐</text>
+        </button>
       </view>
 
-    <view>
-      <view v-if="loading" class="loading-state">
-        <view class="mp-card mp-empty">
-          <text class="mp-empty-title">加载中</text>
-          <text class="mp-empty-desc">正在获取饭桌列表...</text>
-        </view>
+      <!-- 加载状态 -->
+      <view v-if="loading" class="state-card">
+        <text class="state-title">加载中</text>
+        <text class="state-desc">正在获取饭桌列表...</text>
       </view>
       
-      <view v-else-if="loadError" class="mp-card mp-empty">
-        <text class="mp-empty-title">数据加载失败</text>
-        <text class="mp-empty-desc">{{ loadError }}</text>
-        <button class="mp-secondary-btn retry-btn" @click="loadTables">重新加载</button>
+      <!-- 错误状态 -->
+      <view v-else-if="loadError" class="state-card">
+        <text class="state-title">数据加载失败</text>
+        <text class="state-desc">{{ loadError }}</text>
+        <button class="retry-btn" @click="loadTables">重新加载</button>
       </view>
 
-      <view v-else-if="tables.length === 0" class="mp-card mp-empty">
-        <text class="mp-empty-title">还没有饭桌</text>
-        <text class="mp-empty-desc">发起第一场聚餐，邀请家人一起投票。</text>
-        <button class="mp-primary-btn retry-btn" @click="openCreateModal">发起聚餐</button>
+      <!-- 空状态 -->
+      <view v-else-if="tables.length === 0" class="state-card">
+        <text class="state-icon">🍽️</text>
+        <text class="state-title">还没有饭桌</text>
+        <text class="state-desc">发起第一场聚餐，邀请家人一起投票。</text>
+        <button class="create-btn-large" @click="openCreateModal">
+          <text class="btn-icon">+</text>
+          <text class="btn-text">发起聚餐</text>
+        </button>
       </view>
 
+      <!-- 饭桌列表 -->
       <view v-else class="table-list">
         <view 
           v-for="table in tables" 
@@ -200,16 +218,18 @@ function getStatusConfig(status: string) {
               </text>
             </view>
           </view>
-          <view class="card-info">
-            <view class="info-item">
-              <text class="info-text">{{ formatDate(table.createdAt) }}</text>
+          <view class="card-body">
+            <view class="info-row">
+              <text class="info-label">时间</text>
+              <text class="info-value">{{ formatDate(table.createdAt) }}</text>
             </view>
-            <view class="info-item">
-              <text class="info-text">{{ table.guestCount || 0 }} 人参与</text>
+            <view class="info-row">
+              <text class="info-label">参与</text>
+              <text class="info-value">{{ table.guestCount || 0 }} 人</text>
             </view>
           </view>
           <view class="card-footer">
-            <text class="arrow-icon">查看详情</text>
+            <text class="view-detail">查看详情 →</text>
           </view>
         </view>
       </view>
@@ -221,189 +241,385 @@ function getStatusConfig(status: string) {
         <text class="modal-title">发起新聚餐</text>
         
         <view class="form-section">
-          <view class="mp-field">
-            <text class="mp-label">您的称呼</text>
+          <view class="form-field">
+            <text class="field-label">您的称呼</text>
             <input
               v-model="newTable.hostName"
               type="text"
               placeholder="例如：王小明、王大厨..."
-              class="mp-input"
+              class="field-input"
               @input="formErrors.hostName = ''"
             />
-            <text v-if="formErrors.hostName" class="mp-helper-text">{{ formErrors.hostName }}</text>
+            <text v-if="formErrors.hostName" class="field-error">{{ formErrors.hostName }}</text>
           </view>
 
-          <view class="mp-field">
-            <text class="mp-label">饭桌名称</text>
+          <view class="form-field">
+            <text class="field-label">饭桌名称</text>
             <input
               v-model="newTable.name"
               type="text"
               placeholder="例如：春分围炉、老友小聚..."
-              class="mp-input"
+              class="field-input"
               @input="formErrors.name = ''"
             />
-            <text v-if="formErrors.name" class="mp-helper-text">{{ formErrors.name }}</text>
+            <text v-if="formErrors.name" class="field-error">{{ formErrors.name }}</text>
           </view>
 
-          <view class="mp-field">
-            <text class="mp-label">聚餐时间</text>
+          <view class="form-field">
+            <text class="field-label">聚餐时间</text>
             <input
               v-model="newTable.time"
               type="datetime-local"
-              class="mp-input"
+              class="field-input"
               @input="formErrors.time = ''"
             />
-            <text v-if="formErrors.time" class="mp-helper-text">{{ formErrors.time }}</text>
+            <text v-if="formErrors.time" class="field-error">{{ formErrors.time }}</text>
           </view>
 
-          <view class="mp-field">
-            <text class="mp-label">地点</text>
+          <view class="form-field">
+            <text class="field-label">地点（选填）</text>
             <input
               v-model="newTable.location"
               type="text"
               placeholder="例如：翠微居、外滩源..."
-              class="mp-input"
+              class="field-input"
             />
           </view>
         </view>
 
         <view class="modal-actions">
-          <button class="mp-secondary-btn half-btn" @click="closeCreateModal">取消</button>
-          <button class="mp-primary-btn half-btn" @click="createTable" :loading="loading">
+          <button class="cancel-btn" @click="closeCreateModal">取消</button>
+          <button class="confirm-btn" @click="createTable" :disabled="loading">
             {{ loading ? '筹备中...' : '确认发起' }}
           </button>
         </view>
       </view>
     </view>
-    </view>
   </view>
 </template>
 
 <style scoped>
-.header-row {
+/* 页面容器 - 为导航栏留出空间 */
+.mp-shell {
+  padding: 176rpx 24rpx 40rpx;
+  box-sizing: border-box;
+}
+
+/* 页面头部 */
+.page-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20rpx;
+  align-items: center;
+  margin-bottom: 32rpx;
+  padding: 0 8rpx;
 }
 
-.add-btn {
-  width: 220rpx;
-  height: 84rpx;
+.header-subtitle {
   font-size: 26rpx;
+  color: #7F1D1D;
+  flex: 1;
+  line-height: 1.5;
 }
 
-.loading-state {
+.create-btn {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  background: #DC2626;
+  color: white;
+  border: none;
+  border-radius: 32rpx;
+  padding: 16rpx 32rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  box-shadow: 0 4rpx 12rpx rgba(220, 38, 38, 0.3);
+}
+
+.create-btn::after {
+  border: none;
+}
+
+.create-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.btn-icon {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.btn-text {
+  font-size: 28rpx;
+}
+
+/* 状态卡片 */
+.state-card {
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 64rpx 48rpx;
+  text-align: center;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+}
+
+.state-icon {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 24rpx;
+}
+
+.state-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #450A0A;
+  display: block;
   margin-bottom: 16rpx;
 }
 
-.retry-btn {
-  width: 260rpx;
-  margin: 22rpx auto 0;
+.state-desc {
+  font-size: 28rpx;
+  color: #7F1D1D;
+  display: block;
+  margin-bottom: 32rpx;
+  line-height: 1.5;
 }
 
+.retry-btn {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 2rpx solid #DC2626;
+  border-radius: 32rpx;
+  padding: 20rpx 48rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.retry-btn::after {
+  border: none;
+}
+
+.create-btn-large {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  background: #DC2626;
+  color: white;
+  border: none;
+  border-radius: 40rpx;
+  padding: 28rpx 64rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  margin: 0 auto;
+  box-shadow: 0 6rpx 20rpx rgba(220, 38, 38, 0.3);
+}
+
+.create-btn-large::after {
+  border: none;
+}
+
+.create-btn-large:active {
+  transform: scale(0.98);
+}
+
+/* 饭桌列表 */
 .table-list {
   display: flex;
   flex-direction: column;
-  gap: 14rpx;
+  gap: 24rpx;
 }
 
 .table-card {
-  background: var(--bg-surface);
-  border: 2rpx solid var(--border-200);
-  border-radius: var(--radius-lg);
-  padding: 24rpx;
+  background: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  border: 2rpx solid #FEE2E2;
+}
+
+.table-card:active {
+  transform: scale(0.99);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  margin-bottom: 24rpx;
 }
 
 .card-title {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: var(--text-900);
-  line-height: 1.2;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #450A0A;
+  line-height: 1.3;
+  flex: 1;
+  margin-right: 16rpx;
 }
 
 .status-badge {
-  padding: 8rpx 16rpx;
+  padding: 10rpx 20rpx;
   border-radius: 999rpx;
+  flex-shrink: 0;
 }
 
 .status-text {
-  font-size: 22rpx;
+  font-size: 24rpx;
   font-weight: 600;
 }
 
-.card-info {
+.card-body {
+  margin-bottom: 24rpx;
+}
+
+.info-row {
   display: flex;
-  gap: 18rpx;
-  margin-top: 10rpx;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
 }
 
-.info-item {
-  flex: 1;
+.info-row:last-child {
+  margin-bottom: 0;
 }
 
-.info-text {
-  font-size: 24rpx;
-  color: var(--text-500);
+.info-label {
+  font-size: 26rpx;
+  color: #991B1B;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: #450A0A;
+  font-weight: 500;
 }
 
 .card-footer {
-  margin-top: 12rpx;
+  border-top: 2rpx solid #FEF2F2;
+  padding-top: 20rpx;
 }
 
-.arrow-icon {
-  font-size: 24rpx;
-  color: var(--brand-500);
+.view-detail {
+  font-size: 28rpx;
+  color: #DC2626;
+  font-weight: 600;
 }
 
+/* 弹窗 */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(47, 36, 28, 0.36);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 999;
+  padding: 32rpx;
 }
 
 .modal-content {
-  background: var(--bg-surface);
-  border-radius: var(--radius-lg);
-  padding: 34rpx;
-  width: 90%;
-  max-width: 600rpx;
-  max-height: 80vh;
+  background: #FFFFFF;
+  border-radius: 32rpx;
+  padding: 48rpx;
+  width: 100%;
+  max-width: 640rpx;
+  max-height: 85vh;
   overflow-y: auto;
-  border: 2rpx solid var(--border-200);
 }
 
 .modal-title {
-  font-size: 34rpx;
+  font-size: 40rpx;
   font-weight: 700;
-  color: var(--text-900);
+  color: #450A0A;
   display: block;
-  margin-bottom: 20rpx;
+  margin-bottom: 40rpx;
+  text-align: center;
 }
 
 .form-section {
-  margin-bottom: 18rpx;
+  margin-bottom: 40rpx;
+}
+
+.form-field {
+  margin-bottom: 32rpx;
+}
+
+.form-field:last-child {
+  margin-bottom: 0;
+}
+
+.field-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #450A0A;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.field-input {
+  width: 100%;
+  height: 88rpx;
+  background: #FEF2F2;
+  border: 2rpx solid #FECACA;
+  border-radius: 16rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  color: #450A0A;
+  box-sizing: border-box;
+}
+
+.field-input:focus {
+  border-color: #DC2626;
+  background: #FFFFFF;
+}
+
+.field-error {
+  font-size: 24rpx;
+  color: #DC2626;
+  display: block;
+  margin-top: 12rpx;
 }
 
 .modal-actions {
   display: flex;
-  gap: 14rpx;
+  gap: 24rpx;
 }
 
-.half-btn {
+.cancel-btn {
   flex: 1;
+  height: 88rpx;
+  background: #F3F4F6;
+  color: #6B7280;
+  border: none;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.cancel-btn::after {
+  border: none;
+}
+
+.confirm-btn {
+  flex: 1;
+  height: 88rpx;
+  background: #DC2626;
+  color: white;
+  border: none;
+  border-radius: 16rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.confirm-btn::after {
+  border: none;
+}
+
+.confirm-btn[disabled] {
+  opacity: 0.6;
 }
 </style>

@@ -139,192 +139,398 @@ watch(() => familyStore.currentFamily?.id, fetchInvitations);
 </script>
 
 <template>
-  <view class="container">
-    <view class="header">
-      <text class="title">家庭设置</text>
-    </view>
-
-    <view v-if="familyStore.currentFamily" class="family-info">
-      <view class="info-item">
-        <text class="label">家庭名称</text>
-        <text class="value">{{ familyStore.currentFamily.name }}</text>
-      </view>
-      <view v-if="familyStore.currentFamily.description" class="info-item">
-        <text class="label">家庭描述</text>
-        <text class="value">{{ familyStore.currentFamily.description }}</text>
+  <view class="family-page">
+    <!-- 自定义导航栏 -->
+    <view class="custom-nav">
+      <view class="nav-status-bar"></view>
+      <view class="nav-content">
+        <view class="nav-back" @tap="uni.navigateBack({ delta: 1 })">
+          <text class="nav-back-icon">←</text>
+        </view>
+        <text class="nav-title">家庭设置</text>
+        <view class="nav-right"></view>
       </view>
     </view>
-
-    <view class="section">
-      <view class="section-title">成员管理</view>
-      <view class="action-list">
-        <button class="action-btn" @click="goToBindPhone">绑定手机号</button>
-        <button class="action-btn secondary" @click="goToBindWechat">绑定微信</button>
-      </view>
-      <view v-if="loadingMembers" class="helper-tip">正在加载成员...</view>
-      <view v-else-if="members.length === 0" class="helper-tip">当前家庭暂无成员数据。</view>
-      <view v-else class="member-list">
-        <view v-for="member in members" :key="member.id" class="member-item">
-          <view class="member-main">
-            <text class="member-name">{{ member.user?.nickname || '未命名用户' }}</text>
-            <text class="member-role">{{ member.role === 'OWNER' ? '家庭主人' : '管理员' }}</text>
+    
+    <view class="page-content">
+      <view class="hero-section">
+        <view class="hero-content">
+          <view class="logo-container">
+            <view class="logo-badge">
+              <text class="logo-text">SpockChef</text>
+            </view>
           </view>
-          <button
-            v-if="isOwner && member.role !== 'OWNER'"
-            class="remove-btn"
-            size="mini"
-            @click="handleRemoveMember(member.id)"
-          >
-            移除
+          <text class="hero-subtitle">管理您的家庭聚餐团队</text>
+        </view>
+      </view>
+
+      <view v-if="familyStore.currentFamily" class="info-section">
+        <text class="section-heading">家庭信息</text>
+        <view class="info-card">
+          <view class="info-item">
+            <text class="info-label">家庭名称</text>
+            <text class="info-value">{{ familyStore.currentFamily.name }}</text>
+          </view>
+          <view v-if="familyStore.currentFamily.description" class="info-item">
+            <text class="info-label">家庭描述</text>
+            <text class="info-value">{{ familyStore.currentFamily.description }}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="member-section">
+        <text class="section-heading">成员管理</text>
+        <view class="action-buttons">
+          <button class="action-button primary" @tap="goToBindPhone">
+            <view class="button-content">
+              <text class="button-icon">📱</text>
+              <text class="button-text">绑定手机号</text>
+            </view>
+          </button>
+          <button class="action-button secondary" @tap="goToBindWechat">
+            <view class="button-content">
+              <text class="button-icon">💬</text>
+              <text class="button-text">绑定微信</text>
+            </view>
           </button>
         </view>
-      </view>
-    </view>
 
-    <view class="section">
-      <view class="section-title">邀请成员</view>
-      <view v-if="isOwner">
-        <button class="action-btn" :loading="loadingInvite" :disabled="loadingInvite" @click="handleGenerateInviteCode">
-          {{ loadingInvite ? '生成中...' : '生成邀请码并复制' }}
-        </button>
-        <view v-if="inviteCode" class="invite-code">
-          当前邀请码：{{ inviteCode }}
+        <view v-if="loadingMembers" class="loading-indicator">
+          <text class="loading-text">正在加载成员...</text>
         </view>
-        <view class="invite-header">
-          <text class="helper-tip no-margin">邀请码记录</text>
-          <button class="refresh-btn" size="mini" @click="fetchInvitations">刷新</button>
+        <view v-else-if="members.length === 0" class="empty-state">
+          <text class="empty-icon">👥</text>
+          <text class="empty-text">当前家庭暂无成员数据</text>
         </view>
-        <view v-if="loadingInvitations" class="helper-tip">正在加载邀请码记录...</view>
-        <view v-else-if="!invitations.length" class="helper-tip">暂无邀请码记录</view>
-        <view v-else class="invite-list">
-          <view v-for="item in invitations" :key="item.id" class="invite-item">
-            <view class="invite-main">
-              <text class="invite-code-text">{{ item.inviteCode }}</text>
-              <text class="invite-meta">有效期至：{{ formatDate(item.expiresAt) }}</text>
+        <view v-else class="member-list">
+          <view v-for="member in members" :key="member.id" class="member-item">
+            <view class="member-avatar">
+              <text class="avatar-text">{{ (member.user?.nickname || '未命名用户').charAt(0).toUpperCase() }}</text>
             </view>
-            <text class="invite-meta">已用 {{ item.usedCount }}/{{ item.maxUses }}</text>
+            <view class="member-details">
+              <text class="member-name">{{ member.user?.nickname || '未命名用户' }}</text>
+              <text class="member-role">{{ member.role === 'OWNER' ? '家庭主人' : '管理员' }}</text>
+            </view>
+            <button
+              v-if="isOwner && member.role !== 'OWNER'"
+              class="remove-button"
+              @tap="handleRemoveMember(member.id)"
+            >
+              <text class="remove-icon">×</text>
+            </button>
           </view>
         </view>
       </view>
-      <view v-else class="helper-tip">仅家庭主人可生成邀请码，请联系主人邀请您加入管理。</view>
+
+      <view class="invite-section">
+        <text class="section-heading">邀请成员</text>
+        <view v-if="isOwner">
+          <button class="invite-button" :loading="loadingInvite" :disabled="loadingInvite" @tap="handleGenerateInviteCode">
+            <view class="button-content">
+              <text class="button-icon">🎁</text>
+              <text class="button-text">{{ loadingInvite ? '生成中...' : '生成邀请码并复制' }}</text>
+            </view>
+          </button>
+          
+          <view v-if="inviteCode" class="invite-code-display">
+            <text class="code-label">当前邀请码：</text>
+            <text class="code-value">{{ inviteCode }}</text>
+          </view>
+
+          <view class="invite-history">
+            <view class="history-header">
+              <text class="history-title">邀请码记录</text>
+              <button class="refresh-button" @tap="fetchInvitations">
+                <text class="refresh-icon">🔄</text>
+                <text class="refresh-text">刷新</text>
+              </button>
+            </view>
+
+            <view v-if="loadingInvitations" class="loading-indicator">
+              <text class="loading-text">正在加载邀请码记录...</text>
+            </view>
+            <view v-else-if="!invitations.length" class="empty-state">
+              <text class="empty-icon">📭</text>
+              <text class="empty-text">暂无邀请码记录</text>
+            </view>
+            <view v-else class="invitation-list">
+              <view v-for="item in invitations" :key="item.id" class="invitation-item">
+                <view class="invitation-code">
+                  <text class="code-text">{{ item.inviteCode }}</text>
+                </view>
+                <view class="invitation-meta">
+                  <text class="meta-expiry">有效期至：{{ formatDate(item.expiresAt) }}</text>
+                  <text class="meta-usage">已用 {{ item.usedCount }}/{{ item.maxUses }}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view v-else class="restricted-access">
+          <text class="restricted-icon">🔒</text>
+          <text class="restricted-text">仅家庭主人可生成邀请码</text>
+          <text class="restricted-hint">请联系家庭主人邀请您加入管理</text>
+        </view>
+      </view>
     </view>
   </view>
 </template>
 
 <style scoped>
-.container {
+/* 全局样式 */
+.family-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 30rpx;
+  background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
-.header {
-  margin-bottom: 30rpx;
+/* 自定义导航栏 */
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #DC2626;
 }
 
-.title {
-  font-size: 40rpx;
+.nav-status-bar {
+  height: var(--status-bar-height, 44rpx);
+}
+
+.nav-content {
+  height: 100rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 24rpx 16rpx;
+}
+
+.nav-back {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-icon {
+  font-size: 36rpx;
+  color: white;
+}
+
+.nav-title {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: white;
+  flex: 1;
+  text-align: center;
+  line-height: 1;
+  padding-bottom: 4rpx;
+}
+
+.nav-right {
+  width: 60rpx;
+}
+
+.page-content {
+  padding: calc(var(--status-bar-height, 44rpx) + 100rpx + 24rpx) 24rpx 24rpx;
+}
+
+/* 导航栏 */
+.nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32rpx;
+  padding-top: 16rpx;
+}
+
+.nav-btn {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(220, 38, 38, 0.1);
+  transition: all 0.2s ease;
+}
+
+.nav-btn:active {
+  background: rgba(220, 38, 38, 0.2);
+  transform: scale(0.95);
+}
+
+.nav-icon {
+  font-size: 28rpx;
+  color: #DC2626;
   font-weight: bold;
 }
 
-.family-info {
+.nav-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #450A0A;
+}
+
+.nav-placeholder {
+  width: 48rpx;
+}
+
+/* 英雄区域 */
+.hero-section {
+  margin-bottom: 32rpx;
+}
+
+.hero-content {
+  text-align: center;
+  padding: 32rpx 0;
+}
+
+.logo-container {
+  margin-bottom: 16rpx;
+}
+
+.logo-badge {
+  width: 160rpx;
+  height: 60rpx;
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  color: white;
+  border-radius: 30rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  box-shadow: 0 4rpx 16rpx rgba(220, 38, 38, 0.3);
+}
+
+.logo-text {
+  font-size: 24rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+}
+
+.hero-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #450A0A;
+  margin-bottom: 8rpx;
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  font-size: 24rpx;
+  color: #991B1B;
+  line-height: 1.4;
+}
+
+/* 通用部分样式 */
+.section-heading {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #450A0A;
+  margin-bottom: 16rpx;
+  line-height: 1.3;
+}
+
+/* 信息部分 */
+.info-section {
+  margin-bottom: 32rpx;
+}
+
+.info-card {
   background: white;
   border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+  padding: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(220, 38, 38, 0.08);
+  border: 1rpx solid #FECACA;
 }
 
 .info-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #FEE2E2;
 }
 
 .info-item:last-child {
   border-bottom: none;
 }
 
-.label {
-  font-size: 28rpx;
-  color: #666;
+.info-label {
+  font-size: 24rpx;
+  color: #991B1B;
+  font-weight: 500;
 }
 
-.value {
-  font-size: 28rpx;
-  color: #333;
-}
-
-.section {
-  background: white;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-}
-
-.section-title {
-  font-size: 32rpx;
+.info-value {
+  font-size: 24rpx;
   font-weight: 600;
-  margin-bottom: 20rpx;
+  color: #450A0A;
 }
 
-.empty-tip {
-  text-align: center;
-  color: #999;
-  font-size: 28rpx;
-  padding: 40rpx 0;
+/* 成员部分 */
+.member-section {
+  margin-bottom: 32rpx;
 }
 
-.action-list {
+.action-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+}
+
+.action-button {
   display: flex;
-  gap: 20rpx;
-}
-
-.action-btn {
-  flex: 1;
-  height: 84rpx;
-  border-radius: 16rpx;
-  background: #D97706;
-  color: #FFFFFF;
-  font-size: 28rpx;
-  font-weight: 600;
-  border: none;
-}
-
-.action-btn.secondary {
-  background: #FFFFFF;
-  color: #D97706;
-  border: 2rpx solid rgba(217, 119, 6, 0.2);
-}
-
-.action-btn::after {
-  border: none;
-}
-
-.helper-tip {
-  margin-top: 20rpx;
-  color: #999;
-  font-size: 24rpx;
-  line-height: 1.6;
-}
-
-.no-margin {
-  margin-top: 0;
-}
-
-.invite-code {
-  margin-top: 16rpx;
-  padding: 16rpx;
-  background: #fff7ed;
-  color: #c2410c;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 20rpx;
   border-radius: 12rpx;
-  font-size: 24rpx;
-  word-break: break-all;
+  border: none;
+  transition: all 0.2s ease;
 }
 
+.action-button::after {
+  border: none;
+}
+
+.action-button.primary {
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  color: white;
+}
+
+.action-button.secondary {
+  background: white;
+  color: #DC2626;
+  border: 1rpx solid #FECACA;
+}
+
+.action-button:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 8rpx rgba(220, 38, 38, 0.2);
+}
+
+.button-content {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.button-icon {
+  font-size: 24rpx;
+}
+
+.button-text {
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+/* 成员列表 */
 .member-list {
-  margin-top: 18rpx;
   display: flex;
   flex-direction: column;
   gap: 12rpx;
@@ -333,87 +539,324 @@ watch(() => familyStore.currentFamily?.id, fetchInvitations);
 .member-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16rpx;
+  gap: 16rpx;
+  padding: 20rpx;
+  background: white;
   border-radius: 12rpx;
-  background: #fafafa;
+  border: 1rpx solid #FECACA;
+  box-shadow: 0 1rpx 6rpx rgba(220, 38, 38, 0.05);
 }
 
-.member-main {
-  display: flex;
-  flex-direction: column;
-  gap: 6rpx;
-}
-
-.member-name {
-  font-size: 26rpx;
-  color: #333;
-  font-weight: 600;
-}
-
-.member-role {
-  font-size: 22rpx;
-  color: #999;
-}
-
-.remove-btn {
-  background: #ffe8e8;
-  color: #dc2626;
-  border: none;
-}
-
-.remove-btn::after {
-  border: none;
-}
-
-.invite-header {
-  margin-top: 20rpx;
+.member-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  color: white;
+  border-radius: 32rpx;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-}
-
-.refresh-btn {
-  background: #fff7ed;
-  color: #c2410c;
-  border: none;
-}
-
-.refresh-btn::after {
-  border: none;
-}
-
-.invite-list {
-  margin-top: 12rpx;
-  display: flex;
-  flex-direction: column;
-  gap: 10rpx;
-}
-
-.invite-item {
-  padding: 14rpx 16rpx;
-  border-radius: 12rpx;
-  background: #fafafa;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12rpx;
-}
-
-.invite-main {
-  display: flex;
-  flex-direction: column;
-  gap: 4rpx;
-}
-
-.invite-code-text {
-  font-size: 26rpx;
-  color: #7c2d12;
+  justify-content: center;
+  font-size: 28rpx;
   font-weight: 700;
 }
 
-.invite-meta {
+.member-details {
+  flex: 1;
+}
+
+.member-name {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #450A0A;
+  margin-bottom: 4rpx;
+}
+
+.member-role {
+  font-size: 20rpx;
+  color: #991B1B;
+  opacity: 0.9;
+}
+
+.remove-button {
+  width: 48rpx;
+  height: 48rpx;
+  background: rgba(220, 38, 38, 0.1);
+  color: #DC2626;
+  border: none;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.remove-button::after {
+  border: none;
+}
+
+.remove-button:active {
+  background: rgba(220, 38, 38, 0.2);
+  transform: scale(0.95);
+}
+
+.remove-icon {
+  font-size: 24rpx;
+  font-weight: bold;
+}
+
+/* 邀请部分 */
+.invite-section {
+  margin-bottom: 32rpx;
+}
+
+.invite-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+  color: white;
+  border: none;
+  border-radius: 12rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  transition: all 0.2s ease;
+}
+
+.invite-button::after {
+  border: none;
+}
+
+.invite-button:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 12rpx rgba(220, 38, 38, 0.3);
+}
+
+.invite-button:disabled {
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 邀请码显示 */
+.invite-code-display {
+  background: #FEF2F2;
+  border: 1rpx solid #FECACA;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 24rpx;
+}
+
+.code-label {
   font-size: 22rpx;
-  color: #999;
+  color: #991B1B;
+  font-weight: 500;
+}
+
+.code-value {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #DC2626;
+  margin-left: 8rpx;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1rpx;
+}
+
+/* 邀请历史 */
+.invite-history {
+  margin-top: 24rpx;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.history-title {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #450A0A;
+}
+
+.refresh-button {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1rpx solid #FECACA;
+  border-radius: 8rpx;
+  padding: 8rpx 16rpx;
+  transition: all 0.2s ease;
+}
+
+.refresh-button::after {
+  border: none;
+}
+
+.refresh-button:active {
+  background: #FEE2E2;
+  transform: scale(0.95);
+}
+
+.refresh-icon {
+  font-size: 16rpx;
+}
+
+.refresh-text {
+  font-size: 20rpx;
+  font-weight: 500;
+}
+
+/* 邀请列表 */
+.invitation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.invitation-item {
+  background: white;
+  border: 1rpx solid #FECACA;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  box-shadow: 0 1rpx 6rpx rgba(220, 38, 38, 0.05);
+}
+
+.invitation-code {
+  margin-bottom: 12rpx;
+}
+
+.code-text {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #450A0A;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1rpx;
+}
+
+.invitation-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meta-expiry {
+  font-size: 20rpx;
+  color: #991B1B;
+  opacity: 0.8;
+}
+
+.meta-usage {
+  font-size: 20rpx;
+  color: #DC2626;
+  font-weight: 500;
+}
+
+/* 受限访问 */
+.restricted-access {
+  background: #FEF2F2;
+  border: 1rpx solid #FECACA;
+  border-radius: 12rpx;
+  padding: 32rpx 24rpx;
+  text-align: center;
+  margin-top: 16rpx;
+}
+
+.restricted-icon {
+  font-size: 48rpx;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.restricted-text {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #450A0A;
+  margin-bottom: 8rpx;
+  line-height: 1.3;
+}
+
+.restricted-hint {
+  font-size: 20rpx;
+  color: #991B1B;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+/* 加载状态 */
+.loading-indicator {
+  text-align: center;
+  padding: 40rpx 0;
+  color: #991B1B;
+  font-size: 22rpx;
+}
+
+.loading-text {
+  line-height: 1.4;
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 48rpx 24rpx;
+  background: #FEF2F2;
+  border: 1rpx solid #FECACA;
+  border-radius: 12rpx;
+  margin-top: 16rpx;
+}
+
+.empty-icon {
+  font-size: 48rpx;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.empty-text {
+  font-size: 22rpx;
+  color: #991B1B;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+/* 响应式设计 */
+@media (max-width: 375rpx) {
+  .page-content {
+    padding: 172rpx 16rpx 16rpx;
+  }
+  
+  .hero-title {
+    font-size: 32rpx;
+  }
+  
+  .hero-subtitle {
+    font-size: 22rpx;
+  }
+  
+  .action-buttons {
+    gap: 12rpx;
+  }
+  
+  .action-button {
+    padding: 16rpx;
+  }
+  
+  .button-text {
+    font-size: 20rpx;
+  }
+}
+
+@media (min-width: 768rpx) {
+  .page-content {
+    max-width: 600rpx;
+    margin: 0 auto;
+  }
+  
+  .action-buttons {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 </style>

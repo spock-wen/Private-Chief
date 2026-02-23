@@ -1,19 +1,6 @@
 version: '3.8'
 
 services:
-  spockchef-frontend:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.frontend
-    container_name: spockchef-frontend
-    ports:
-      - "8060:8060"
-    depends_on:
-      - spockchef-backend
-    networks:
-      - spockchef-network
-    restart: unless-stopped
-
   spockchef-backend:
     build:
       context: ..

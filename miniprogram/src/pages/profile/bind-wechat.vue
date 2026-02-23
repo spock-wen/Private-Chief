@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onLoad } from '@dcloudio/uni-app';
 import { ref } from 'vue';
-import { bindWechatByToken } from '@/api/bind-account';
+import { bindWechatByToken, bindWechat } from '@/api/bind-account';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 const authStore = useAuthStore();
@@ -20,20 +20,11 @@ onLoad((query: any) => {
     if (match && match[1]) {
       bindToken.value = match[1];
       handleBind();
-    } else {
-      error.value = '无效的绑定链接';
     }
-  } else {
-    error.value = '无效的绑定链接';
   }
 });
 
 async function handleBind() {
-  if (!bindToken.value) {
-    error.value = '无效的绑定链接';
-    return;
-  }
-
   loading.value = true;
   
   try {
@@ -51,7 +42,15 @@ async function handleBind() {
       return;
     }
 
-    const res: any = await bindWechatByToken(bindToken.value, code);
+    let res: any;
+    if (bindToken.value) {
+      // 从网页端扫码绑定
+      res = await bindWechatByToken(bindToken.value, code);
+    } else {
+      // 直接绑定（从小程序内部进入）
+      res = await bindWechat(code);
+    }
+    
     authStore.updateUser(res.user);
     success.value = true;
     
@@ -77,6 +76,18 @@ async function handleBind() {
 
 <template>
   <view class="container">
+    <!-- 自定义导航栏 -->
+    <view class="custom-nav">
+      <view class="nav-status-bar"></view>
+      <view class="nav-content">
+        <view class="nav-back" @tap="uni.navigateBack({ delta: 1 })">
+          <text class="nav-back-icon">←</text>
+        </view>
+        <text class="nav-title">绑定微信</text>
+        <view class="nav-right"></view>
+      </view>
+    </view>
+
     <view v-if="loading" class="content">
       <text class="loading">正在绑定...</text>
     </view>
@@ -96,18 +107,69 @@ async function handleBind() {
     
     <view v-else class="content">
       <text class="title">微信绑定</text>
-      <text class="desc">请从网页端扫描小程序码进行绑定</text>
+      <text class="desc">绑定微信账号以同步您的用餐偏好</text>
+      <button class="bind-btn" @click="handleBind">立即绑定</button>
     </view>
   </view>
 </template>
 
 <style scoped>
+/* 自定义导航栏 */
+.custom-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #DC2626;
+}
+
+.nav-status-bar {
+  height: var(--status-bar-height, 44rpx);
+}
+
+.nav-content {
+  height: 100rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 24rpx 16rpx;
+}
+
+.nav-back {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-icon {
+  font-size: 36rpx;
+  color: white;
+}
+
+.nav-title {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: white;
+  flex: 1;
+  text-align: center;
+  line-height: 1;
+  padding-bottom: 4rpx;
+}
+
+.nav-right {
+  width: 60rpx;
+}
+
 .container {
   min-height: 100vh;
   background: #f5f5f5;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-top: calc(var(--status-bar-height, 44rpx) + 100rpx);
 }
 
 .content {
@@ -150,9 +212,10 @@ async function handleBind() {
   color: #666;
 }
 
-.retry-btn {
+.retry-btn,
+.bind-btn {
   margin-top: 40rpx;
-  background: #ff6b35;
+  background: #DC2626;
   color: white;
   border: none;
   border-radius: 40rpx;
